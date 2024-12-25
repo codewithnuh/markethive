@@ -1,7 +1,10 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
+import { useSignIn } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +21,45 @@ import { DialogTrigger } from "@radix-ui/react-dialog";
 import ForgotPassword from "./forgot-password-page";
 
 export default function LoginForm() {
+  const { isLoaded, signIn, setActive } = useSignIn();
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isLoaded) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
+
+      if (signInAttempt.status === "complete") {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.push("/");
+      } else {
+        setError("Unexpected error occurred. Please try again.");
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      if (err.errors) {
+        setError(err.errors[0]?.message || "Sign-in failed.");
+      } else {
+        setError("An unknown error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
@@ -64,7 +106,7 @@ export default function LoginForm() {
             </div>
           </div>
 
-          <form onSubmit={(e) => e.preventDefault()}>
+          <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
@@ -72,6 +114,8 @@ export default function LoginForm() {
                   id="email"
                   placeholder="m@example.com"
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   autoCapitalize="none"
                   autoComplete="email"
                   autoCorrect="off"
@@ -90,13 +134,22 @@ export default function LoginForm() {
                     <DialogTitle className="sr-only">
                       Forgot Password
                     </DialogTitle>
-                    <DialogContent>
+                    <DialogContent className="outline-none border-0">
                       <ForgotPassword />
                     </DialogContent>
                   </Dialog>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
+              {error && (
+                <div className="text-red-500 text-sm text-center">{error}</div>
+              )}
               <div className="flex items-center space-x-2">
                 <Checkbox id="remember" />
                 <label
@@ -106,8 +159,8 @@ export default function LoginForm() {
                   Remember me
                 </label>
               </div>
-              <Button type="submit" className="w-full">
-                Sign in
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Sign in"}
               </Button>
             </div>
           </form>
