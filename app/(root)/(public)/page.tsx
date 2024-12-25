@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
+import Hero from "@/components/hero";
 import React from "react";
 
 const HomePage = () => {
   return (
-    <div>
-      <Button>CLick me</Button>
+    <div className="container">
+      <Hero />
     </div>
   );
 };
