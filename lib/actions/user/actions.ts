@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 type ProfileData = {
   firstName: string;
@@ -67,4 +68,9 @@ export async function getUserData(): Promise<
     email: "john.doe@example.com",
     profileImageUrl: "/placeholder.svg?height=200&width=200",
   };
+}
+export async function getUserInfo() {
+  const { userId } = await auth();
+  const user = await currentUser();
+  return user;
 }

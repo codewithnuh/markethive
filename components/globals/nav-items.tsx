@@ -14,6 +14,7 @@ import Link from "next/link";
 const NavItems = () => {
   const { isSignedIn } = useUser();
   const { signOut } = useClerk();
+
   return isSignedIn ? (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center space-x-2 ">
@@ -35,7 +36,7 @@ const NavItems = () => {
     </DropdownMenu>
   ) : (
     <Button asChild size={"sm"}>
-      <Link href={"/signin"}>SignIn</Link>
+      <Link href={"/sign-in"}>SignIn</Link>
     </Button>
   );
 };

@@ -21,6 +21,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Image from "next/image";
 
 const Hero = () => {
   return (
@@ -95,13 +96,12 @@ const Hero = () => {
             <CarouselContent>
               {Array.from({ length: 5 }).map((_, index) => (
                 <CarouselItem key={index}>
-                  <div className="p-1">
-                    <div className="flex aspect-square items-center justify-center rounded-md bg-primary/10 p-6 dark:bg-primary/20">
-                      <span className="text-3xl font-semibold text-primary dark:text-primary-foreground">
-                        {index + 1}
-                      </span>
-                    </div>
-                  </div>
+                  <Image
+                    src={"/test-2.png"}
+                    width={1000}
+                    height={1000}
+                    alt="Product"
+                  />
                 </CarouselItem>
               ))}
             </CarouselContent>

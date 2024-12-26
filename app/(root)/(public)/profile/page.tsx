@@ -1,10 +1,20 @@
-import { getUserData } from "@/lib/actions/user/actions";
+import { getUserData, getUserInfo } from "@/lib/actions/user/actions";
 import ProfileForm from "@/components/user/profile-form";
 import PasswordForm from "@/components/user/password-form";
 import ImageUploadForm from "@/components/user/image-upload";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+
 export default async function ProfilePage() {
   const userData = await getUserData();
+  const userInfo = await getUserInfo();
 
+  console.log(userInfo?.imageUrl);
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -12,41 +22,53 @@ export default async function ProfilePage() {
           Your Profile
         </h1>
 
-        <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg ">
-          <div className="px-4 py-5 sm:p-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+        {/* Profile Information Card */}
+        <Card className="bg-white dark:bg-background/40 border sm:rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">
               Profile Information
-            </h2>
+            </CardTitle>
+            <CardDescription className="text-sm text-gray-600 dark:text-gray-300">
+              Update your profile details here.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <div className="mt-5">
               <ImageUploadForm initialImageUrl={userData.profileImageUrl} />
             </div>
             <div className="mt-5">
               <ProfileForm initialData={userData} />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+        {/* Email Address Card */}
+        <Card className="bg-white dark:bg-background/40 border sm:rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">
               Email Address
-            </h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
               {userData.email}
             </p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+        {/* Change Password Card */}
+        <Card className="bg-white dark:bg-background/40 border sm:rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">
               Change Password
-            </h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="mt-5">
               <PasswordForm />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

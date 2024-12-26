@@ -1,12 +1,9 @@
 "use client";
 import React from "react";
 import { ModeToggle } from "../theme/theme-toggler";
-
 import Link from "next/link";
-
-import { ShoppingCartIcon } from "lucide-react";
 import NavItems from "./nav-items";
-
+import ShoppingCart from "../products/shopping-cart";
 const NavBar = () => {
   return (
     <header>
@@ -20,7 +17,7 @@ const NavBar = () => {
           <NavItems />
           <ModeToggle />
           <div>
-            <ShoppingCartIcon />
+            <ShoppingCart />
           </div>
         </div>
       </nav>

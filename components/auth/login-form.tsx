@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import * as React from "react";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
+import { OAuthStrategy } from "@clerk/types";
 import ForgotPassword from "./forgot-password-page";
 
 export default function LoginForm() {
@@ -25,8 +26,28 @@ export default function LoginForm() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const router = useRouter();
+
+  const handleOAuthSignIn = async (strategy: OAuthStrategy) => {
+    if (!isLoaded || !signIn) return;
+
+    try {
+      setIsOAuthLoading(true);
+      setError(null);
+
+      await signIn.authenticateWithRedirect({
+        strategy,
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/",
+      });
+    } catch (err: any) {
+      setError(err.errors?.[0]?.message || "Failed to sign in with Google");
+    } finally {
+      setIsOAuthLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +69,6 @@ export default function LoginForm() {
       } else {
         setError("Unexpected error occurred. Please try again.");
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err.errors) {
         setError(err.errors[0]?.message || "Sign-in failed.");
@@ -65,9 +85,9 @@ export default function LoginForm() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
         <CardDescription>
-          Don't have an account yet?{" "}
+          {` Don't have an account yet? `}
           <Link
-            href="/signup"
+            href="/sign-up"
             className="text-primary hover:underline font-medium"
           >
             Sign up here
@@ -76,23 +96,37 @@ export default function LoginForm() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Button variant="outline" className="w-full">
-            <svg
-              className="w-4 h-4 mr-2"
-              aria-hidden="true"
-              focusable="false"
-              data-prefix="fab"
-              data-icon="google"
-              role="img"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 488 512"
-            >
-              <path
-                fill="currentColor"
-                d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-              ></path>
-            </svg>
-            Sign in with Google
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => handleOAuthSignIn("oauth_google")}
+            disabled={isOAuthLoading}
+          >
+            {isOAuthLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Connecting to Google...
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4 mr-2"
+                  aria-hidden="true"
+                  focusable="false"
+                  data-prefix="fab"
+                  data-icon="google"
+                  role="img"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 488 512"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                  ></path>
+                </svg>
+                Sign in with Google
+              </>
+            )}
           </Button>
 
           <div className="relative">
@@ -160,7 +194,14 @@ export default function LoginForm() {
                 </label>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing in..." : "Sign in"}
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </Button>
             </div>
           </form>
