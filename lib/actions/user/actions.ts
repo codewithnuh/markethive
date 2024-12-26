@@ -1,76 +1,135 @@
 "use server";
 
+import { z } from "zod";
+import { db } from "@/lib/database/db";
+import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { auth, currentUser } from "@clerk/nextjs/server";
 
-type ProfileData = {
-  firstName: string;
-  lastName: string;
+// Validation schema
+const userSchema = z.object({
+  clerkId: z.string(),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  role: z.string().optional(),
+});
+
+// Types
+type UserInput = z.infer<typeof userSchema>;
+
+type AddUserResponse = {
+  success?: boolean;
+  error?: string;
+  data?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 };
 
-export async function updateProfile(formData: FormData) {
-  // In a real application, you would update the user's profile in your database
-  // This is a mock implementation
-  const firstName = formData.get("firstName") as string;
-  const lastName = formData.get("lastName") as string;
+export async function addUser(input: UserInput): Promise<AddUserResponse> {
+  try {
+    // // Get authenticated user's ID
+    // const { userId } = await auth();
+    // if (!userId) {
+    //   return {
+    //     success: false,
+    //     error: "Unauthorized: Please sign in",
+    //   };
+    // }
 
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Validate input
+    const validatedData = userSchema.safeParse(input);
+    if (!validatedData.success) {
+      return {
+        success: false,
+        error: validatedData.error.errors[0]?.message || "Invalid input",
+      };
+    }
 
-  // Revalidate the profile page
-  revalidatePath("/profile");
+    // Check if user already exists
+    const existingUser = await db.user.findFirst({
+      where: {
+        OR: [{ email: validatedData.data.email }],
+      },
+    });
 
-  return { success: true, message: "Profile updated successfully" };
+    if (existingUser) {
+      return {
+        success: false,
+        error: "User already exists",
+      };
+    }
+
+    // Create new user
+    const newUser = await db.user.create({
+      // Need to wrap the data in a 'data' object
+      data: {
+        ...validatedData.data,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+      },
+    });
+
+    // Revalidate relevant paths
+    revalidatePath("/profile");
+
+    return {
+      success: true,
+      data: newUser,
+    };
+  } catch (error) {
+    console.error("Error adding user:", error);
+
+    if (error instanceof Error && error.message.includes("unique constraint")) {
+      return {
+        success: false,
+        error: "This email is already registered",
+      };
+    }
+
+    return {
+      success: false,
+      error: "Failed to add user. Please try again.",
+    };
+  }
 }
 
-export async function updatePassword(formData: FormData) {
-  // In a real application, you would update the user's password in your database
-  // This is a mock implementation
-  const currentPassword = formData.get("currentPassword") as string;
-  const newPassword = formData.get("newPassword") as string;
+// Example usage in a Client Component:
+/*
+'use client';
 
-  // Simulate API call and password validation
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+import { addUser } from "@/app/actions/add-user";
 
-  // Revalidate the profile page
-  revalidatePath("/profile");
+export default function UserForm() {
+  async function handleSubmit(formData: FormData) {
+    const userData = {
+      firstName: formData.get('firstName') as string,
+      lastName: formData.get('lastName') as string,
+      email: formData.get('email') as string,
+    };
 
-  return { success: true, message: "Password updated successfully" };
-}
+    const result = await addUser(userData);
 
-export async function uploadProfileImage(formData: FormData) {
-  // In a real application, you would upload the image to a storage service
-  // and update the user's profile with the new image URL
-  // This is a mock implementation
-  const file = formData.get("profileImage") as File;
+    if (!result.success) {
+      // Handle error (e.g., show toast message)
+      console.error(result.error);
+      return;
+    }
 
-  if (!file) {
-    return { success: false, message: "No file uploaded" };
+    // Handle success
+    console.log('User added:', result.data);
   }
 
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Revalidate the profile page
-  revalidatePath("/profile");
-
-  return { success: true, message: "Profile image updated successfully" };
+  return (
+    <form action={handleSubmit}>
+      ...form fields...
+    </form>
+  );
 }
-
-export async function getUserData(): Promise<
-  ProfileData & { email: string; profileImageUrl: string }
-> {
-  // In a real application, you would fetch this data from your database
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return {
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    profileImageUrl: "/placeholder.svg?height=200&width=200",
-  };
-}
-export async function getUserInfo() {
-  const { userId } = await auth();
-  const user = await currentUser();
-  return user;
-}
+*/

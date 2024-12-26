@@ -3,7 +3,8 @@ import React from "react";
 import { ModeToggle } from "../theme/theme-toggler";
 import Link from "next/link";
 import NavItems from "./nav-items";
-import ShoppingCart from "../products/shopping-cart";
+// import ShoppingCart from "../products/shopping-cart";
+import CartSidebar from "../products/cart-sidebar";
 const NavBar = () => {
   return (
     <header>
@@ -17,7 +18,7 @@ const NavBar = () => {
           <NavItems />
           <ModeToggle />
           <div>
-            <ShoppingCart />
+            <CartSidebar />
           </div>
         </div>
       </nav>
