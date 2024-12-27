@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import NavBar from "@/components/globals/navbar";
 import { ClerkProvider } from "@clerk/nextjs";
 import localFont from "next/font/local";
+import { Toaster } from "@/components/ui/toaster";
 const poppins = localFont({
   src: [
     {
@@ -52,6 +53,7 @@ export default function RootLayout({
           >
             <NavBar />
             {children}
+            <Toaster />
           </ThemeProvider>
         </body>
       </html>

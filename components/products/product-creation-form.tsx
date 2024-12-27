@@ -247,7 +247,7 @@ export default function ProductCreationForm() {
               render={({ field }) => (
                 <ImageUpload
                   onChange={(file) => field.onChange(file)}
-                  value={field.value}
+                  value={field.value as File}
                 />
               )}
             />

@@ -1,7 +1,6 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader } from "../ui/card";
 import Image from "next/image";
-import { Button } from "../ui/button";
 import { ShoppingCart } from "lucide-react";
 import {
   Dialog,

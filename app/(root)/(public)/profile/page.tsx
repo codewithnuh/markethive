@@ -1,7 +1,6 @@
-import { getUserData, getUserInfo } from "@/lib/actions/user/actions";
+import { getUser } from "@/lib/actions/user/actions";
 import ProfileForm from "@/components/user/profile-form";
 import PasswordForm from "@/components/user/password-form";
-import ImageUploadForm from "@/components/user/image-upload";
 import {
   Card,
   CardHeader,
@@ -11,10 +10,7 @@ import {
 } from "@/components/ui/card";
 
 export default async function ProfilePage() {
-  const userData = await getUserData();
-  const userInfo = await getUserInfo();
-
-  console.log(userInfo?.imageUrl);
+  const USER = await getUser();
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -34,10 +30,10 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="mt-5">
-              <ImageUploadForm initialImageUrl={userData.profileImageUrl} />
+              {/* <ImageUploadForm initialImageUrl={userData.profileImageUrl} /> */}
             </div>
             <div className="mt-5">
-              <ProfileForm initialData={userData} />
+              <ProfileForm userData={USER.data} />
             </div>
           </CardContent>
         </Card>
@@ -51,7 +47,7 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              {userData.email}
+              {USER.data?.email}
             </p>
           </CardContent>
         </Card>

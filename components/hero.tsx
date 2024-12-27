@@ -1,9 +1,4 @@
-import {
-  BadgeDollarSign,
-  CarIcon,
-  Search,
-  IndianRupeeIcon,
-} from "lucide-react";
+import { CarIcon, Search, IndianRupeeIcon } from "lucide-react";
 import React from "react";
 import { Input } from "@/components/ui/input";
 import {

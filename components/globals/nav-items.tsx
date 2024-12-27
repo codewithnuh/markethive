@@ -12,10 +12,9 @@ import { UserIcon } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 const NavItems = () => {
-  const { isSignedIn } = useUser();
+  const { user } = useUser();
   const { signOut } = useClerk();
-
-  return isSignedIn ? (
+  return user?.id !== undefined ? (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center space-x-2 ">
         <UserIcon />

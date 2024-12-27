@@ -26,3 +26,27 @@ model User {
 
   @@map("users") // Specifies the table name in PostgreSQL
 }
+
+// model Product {
+//   id          String   @id @default(cuid())
+//   customerId  String
+//   name        String
+//   description String
+//   images      String[]
+//   price       Float
+//   stock       Int
+//   ratings     Float
+//   category    String
+//   attributes  String[]
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//   customer    User     @relation("CustomerId", fields: [customerId], references: [id])
+//   User        User?    @relation(fields: [userId], references: [id])
+//   userId      String?
+
+//   @@map("products")
+// }
+
+// enum Categories {
+//   ELECTRONICS
+// }
