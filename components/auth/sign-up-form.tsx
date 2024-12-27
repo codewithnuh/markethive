@@ -27,6 +27,8 @@ import { Loader2 } from "lucide-react";
 type SignUpState = {
   emailAddress: string;
   password: string;
+  firstName: string;
+  lastName: string;
 };
 
 interface SubmitButtonProps {
@@ -55,6 +57,8 @@ export default function SignUpForm() {
   const [formState, setFormState] = React.useState<SignUpState>({
     emailAddress: "",
     password: "",
+    firstName: "",
+    lastName: "",
   });
   const [verifying, setVerifying] = React.useState(false);
   const [code, setCode] = React.useState("");
@@ -122,6 +126,8 @@ export default function SignUpForm() {
       await signUp.create({
         emailAddress: formState.emailAddress,
         password: formState.password,
+        firstName: formState.firstName,
+        lastName: formState.lastName,
       });
 
       await signUp.prepareEmailAddressVerification({
@@ -261,6 +267,44 @@ export default function SignUpForm() {
 
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First name</Label>
+                <Input
+                  id="firstName"
+                  placeholder="John"
+                  type="text"
+                  value={formState.firstName}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      firstName: e.target.value,
+                    }))
+                  }
+                  autoCapitalize="words"
+                  autoComplete="given-name"
+                  autoCorrect="off"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last name</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  type="text"
+                  value={formState.lastName}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      lastName: e.target.value,
+                    }))
+                  }
+                  autoCapitalize="words"
+                  autoComplete="family-name"
+                  autoCorrect="off"
+                  required
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
                 <Input
