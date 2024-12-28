@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,35 +12,115 @@ model User {
   id        String   @id @default(cuid())
   firstName String
   lastName  String
-  role      String   @default("CUSTOMER")
+  role      String   @default("CUSTOMER") // Can be "CUSTOMER", "ADMIN", etc.
   clerkId   String   @unique
   email     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  carts     Cart[] // Relation to Cart
+  orders    Order[] // Relation to Order
 
   @@map("users") // Specifies the table name in PostgreSQL
 }
 
-// model Product {
-//   id          String   @id @default(cuid())
-//   customerId  String
-//   name        String
-//   description String
-//   images      String[]
-//   price       Float
-//   stock       Int
-//   ratings     Float
-//   category    String
-//   attributes  String[]
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-//   customer    User     @relation("CustomerId", fields: [customerId], references: [id])
-//   User        User?    @relation(fields: [userId], references: [id])
-//   userId      String?
+// Product model
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  images      String[] // Array of image URLs
+  price       Float
+  stock       Int // Current stock count
+  ratings     Float       @default(0) // Average rating
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  attributes  Json // Key-value pair for attributes like size, color, etc.
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  cartItems   CartItem[] // Relation to CartItem
+  orderItems  OrderItem[] // Relation to OrderItem
 
-//   @@map("products")
-// }
+  @@map("products")
+}
 
-// enum Categories {
-//   ELECTRONICS
-// }
+// Category model with predefined categories
+model Category {
+  id       String       @id @default(cuid())
+  name     CategoryType @unique
+  products Product[] // Relation to Products
+
+  @@map("categories")
+}
+
+// Cart model
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  cartItems CartItem[] // Relation to CartItem
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("carts")
+}
+
+// CartItem model
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cart_items")
+}
+
+// Order model
+model Order {
+  id         String      @id @default(cuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  orderItems OrderItem[] // Relation to OrderItem
+  status     OrderStatus @default(PENDING) // Enum for order status
+  totalPrice Float
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+// OrderItem model
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float // Price at the time of order
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("order_items")
+}
+
+// Enum for order status
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELED
+}
+
+// Enum for predefined categories
+enum CategoryType {
+  ELECTRONICS
+  COMPUTER_THINGS
+  MOBILE_DEVICES
+  HOME_APPLIANCES
+  GAMING
+  OTHER
+}

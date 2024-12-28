@@ -12,8 +12,12 @@ import { AttributesField } from "./attributes-field";
 import { CategoryField } from "./category-field";
 import { PriceField } from "./price-field";
 import { StockField } from "./stock-field";
+import { UploadButton } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProductCreationForm() {
+  const { toast } = useToast();
+  const [productPictures, setProductPictures] = useState<string[]>([]);
   const [attributes, setAttributes] = useState<
     { key: string; value: string }[]
   >([]);
@@ -37,6 +41,7 @@ export default function ProductCreationForm() {
   });
 
   const onSubmit = (data: ProductFormData): void => {
+    console.log({ images: productPictures });
     console.log("Form data:", { ...data, attributes });
     // Handle form submission
   };
@@ -57,6 +62,35 @@ export default function ProductCreationForm() {
             setValue={setValue}
             watch={watch}
           />
+          <UploadButton
+            className="ut-button:bg-primary ut-button:w-full"
+            endpoint="imageUploader"
+            onClientUploadComplete={(files) => {
+              if (files.length > 0) {
+                // Extract URLs from the uploaded files
+                const uploadedUrls = files.map((file) => file.url);
+
+                // Update state with the new URLs
+                setProductPictures((prev) => [...prev, ...uploadedUrls]);
+
+                // Show a success toast
+                toast({
+                  variant: "default",
+                  title: "Images Uploaded",
+                  description: "Your images have been uploaded successfully.",
+                });
+              }
+            }}
+            onUploadError={(err) => {
+              // Show an error toast if upload fails
+              toast({
+                variant: "destructive",
+                title: "Upload Error",
+                description: `Error: ${err.message}`,
+              });
+            }}
+          />
+
           <CategoryField control={control} errors={errors} />
           {/* <ImageUploadField control={control} /> */}
           <StockField register={register} errors={errors} />

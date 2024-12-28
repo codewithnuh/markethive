@@ -12,6 +12,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { addToCart } from "@/lib/actions/product/cart/actions";
+import { useToast } from "@/hooks/use-toast";
 
 const product = {
   name: "Ergonomic Desk Chair",
@@ -29,10 +31,40 @@ const product = {
     { name: "Weight Capacity", value: "300 lbs" },
     { name: "Adjustable Height", value: "Yes" },
   ],
+  id: "23", // Add a product ID for demonstration
 };
 
 export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
+  const { toast } = useToast();
+  const handleAddToCart = async () => {
+    console.log(quantity, product.id);
+    try {
+      const response = await addToCart({
+        productId: product.id,
+        quantity,
+      });
+
+      if (response.success) {
+        console.log("Item added to cart:", response.data);
+        toast({
+          title: "Product added",
+          description: "Friday, February 10, 2023 at 5:57 PM",
+        });
+        // Optionally, show a success message or update UI
+      } else {
+        console.error("Failed to add item to cart:", response.error);
+        toast({
+          title: "Product not added",
+          description: "Friday, February 10, 2023 at 5:57 PM",
+        });
+        // Optionally, show an error message
+      }
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      // Optionally, show an error message
+    }
+  };
 
   return (
     <div className="grid gap-8 md:grid-cols-2">
@@ -96,7 +128,7 @@ export default function ProductDetails() {
             </Button>
           </div>
         </div>
-        <Button className="w-full" size="lg">
+        <Button className="w-full" size="lg" onClick={handleAddToCart}>
           Add to Cart
         </Button>
         <div className="flex items-center justify-between">
