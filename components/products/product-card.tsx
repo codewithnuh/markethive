@@ -1,49 +1,92 @@
-import React from "react";
-import { Card, CardContent, CardHeader } from "../ui/card";
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import type { Product } from "./product-grid";
+import Link from "next/link";
+export default function ProductCard({ product }: { product: Product }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-const ProductCard = () => {
+  const nextImage = () => {
+    setCurrentImageIndex((prevIndex) =>
+      prevIndex === product.images.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prevIndex) =>
+      prevIndex === 0 ? product.images.length - 1 : prevIndex - 1
+    );
+  };
+
   return (
-    <Card className="border-2 border-primary bg-background/50 ">
-      <CardHeader>
-        <div className="aspect-[4/2.5] relative">
+    <Card className="flex flex-col h-full relative group">
+      <Button
+        className="absolute right-2 top-2 p-2 rounded-full bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        aria-label="Add to wishlist"
+      >
+        <Heart className="w-5 h-5" />
+      </Button>
+      <CardContent className="flex-grow p-4">
+        <div className="aspect-square relative mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
           <Image
-            src={"/test-2.png"}
-            alt="window"
+            src={product.images[currentImageIndex]}
+            alt={product.name}
             fill
-            className="object-cover absolute"
+            className="object-cover"
           />
+          {product.images.length > 1 && (
+            <>
+              <Button
+                onClick={prevImage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/70 dark:bg-gray-800/70 text-gray-800 dark:text-white"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <Button
+                onClick={nextImage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/70 dark:bg-gray-800/70 text-gray-800 dark:text-white"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </>
+          )}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <h2 className="font-semibold text-2xl">{` Apple iMac 27", 1TB HDD, Retina 5K Display, M3 Max`}</h2>
-
-          <div className="flex items-center justify-between ">
-            <span className="font-bold text-xl">$1,699</span>
-
-            <ShoppingCart />
-            <Dialog>
-              <DialogTrigger>
-                <span>Add to card</span>
-              </DialogTrigger>
-              <DialogTitle className="sr-only">Product Details</DialogTitle>
-              <DialogContent>
-                <h1>HEllo</h1>
-              </DialogContent>
-            </Dialog>
+        <div className="space-y-2 flex-grow">
+          <div className="flex justify-between items-start">
+            <h3 className="font-medium text-lg line-clamp-2">{product.name}</h3>
+            <Badge variant="secondary">{product.category}</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            {product.description}
+          </p>
+          <div className="flex justify-between items-center mt-auto pt-2">
+            <p className="text-xl font-bold">
+              ${product.price.toLocaleString()}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">RAM:</span>
+            <Badge variant="outline">
+              {product.attributes.find((attr) => attr.key === "RAM")?.value}
+            </Badge>
           </div>
         </div>
       </CardContent>
+      <CardFooter className="p-4">
+        <Button className="w-full" asChild>
+          <Link href={`/product/${product.id}`}>Add to cart</Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
-};
-
-export default ProductCard;
+}

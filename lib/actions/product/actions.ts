@@ -239,3 +239,101 @@ export async function deleteProduct(
     };
   }
 }
+
+import { Prisma } from "@prisma/client";
+
+/**
+ * Retrieves all products from the database
+ * @returns Promise resolving to a list of products or an error response
+ */
+export async function getAllProducts(): Promise<{
+  success: boolean;
+  data?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    images: string[];
+    price: number;
+    stock: number;
+    ratings?: number;
+    category: string;
+    attributes: Array<{ key: string; value: string }>;
+  }>;
+  error?: string;
+}> {
+  try {
+    // Fetch all products from the database
+    const products = await db.product.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        images: true,
+        price: true,
+        stock: true,
+        ratings: true,
+        category: true,
+        attributes: true, // This is of type Json in your schema
+      },
+    });
+
+    // Transform the attributes property to match the expected type
+    const transformedProducts = products.map((product) => ({
+      ...product,
+      attributes: Array.isArray(product.attributes)
+        ? product.attributes.map((attribute) => {
+            if (
+              typeof attribute === "object" &&
+              attribute !== null &&
+              "key" in attribute &&
+              "value" in attribute
+            ) {
+              return {
+                key: String(attribute.key),
+                value: String(attribute.value),
+              };
+            }
+            throw new Error(
+              `Invalid attribute format for product ID ${product.id}`
+            );
+          })
+        : [],
+    }));
+
+    return {
+      success: true,
+      data: transformedProducts,
+    };
+  } catch (error: unknown) {
+    console.error("Error fetching products:", error);
+
+    // Prisma-specific error handling
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P1001") {
+        return {
+          success: false,
+          error:
+            "Unable to connect to the database. Please check your database connection settings or the database status.",
+        };
+      }
+      return {
+        success: false,
+        error: `Prisma error: ${error.message}`,
+      };
+    }
+
+    // Handle any unknown or general errors
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: `Unexpected error: ${error.message}`,
+      };
+    }
+
+    // Fallback for any other unknown errors
+    return {
+      success: false,
+      error: "An unknown error occurred while retrieving products.",
+    };
+  }
+}

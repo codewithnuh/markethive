@@ -1,30 +1,54 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-// Define protected routes
-const isProtectedRoute = createRouteMatcher(["/profile(.*)", "/admin(.*)"]);
+const isCustomerRoute = createRouteMatcher(["/profile"]);
+const isAdminRoute = createRouteMatcher(["/admin", "/admin(.*)"]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const url = req.nextUrl.clone();
-  const { userId } = await auth();
 
-  if (isProtectedRoute(req)) {
-    // If the user is not authenticated, redirect to the sign-in page
+  try {
+    const { userId } = await auth(); // Get session claims directly from auth()
+
+    // Determine if the user is the author/admin
+    const isAuthor = userId == process.env.AUTH_ID;
+
     if (!userId) {
-      url.pathname = "/sign-in"; // Set the pathname to the sign-in page
-      return NextResponse.redirect(url); // Use the cloned URL object
+      // Public users should not access any protected routes
+      if (isCustomerRoute(req) || isAdminRoute(req)) {
+        url.pathname = "/sign-in";
+        return NextResponse.redirect(url);
+      }
     }
+
+    if (userId) {
+      if (isCustomerRoute(req)) {
+        // Redirect customers trying to access admin routes
+        if (!isAuthor && isAdminRoute(req)) {
+          url.pathname = "/";
+          return NextResponse.redirect(url);
+        }
+
+        return NextResponse.next();
+      }
+
+      if (isAdminRoute(req)) {
+        // Restrict admin routes to only authors
+        if (!isAuthor) {
+          url.pathname = "/sign-in";
+          return NextResponse.redirect(url);
+        }
+
+        return NextResponse.next();
+      }
+    }
+
     return NextResponse.next();
+  } catch (error) {
+    console.error("Error in middleware:", error);
+
+    // Redirect to an error page or sign-in if something goes wrong
+    url.pathname = "/sign-in";
+    return NextResponse.redirect(url);
   }
 });
-
-// Configuration for the middleware
-export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
-  ],
-};
