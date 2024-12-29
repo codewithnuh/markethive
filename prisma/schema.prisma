@@ -32,8 +32,7 @@ model Product {
   price       Float
   stock       Int // Current stock count
   ratings     Float       @default(0) // Average rating
-  categoryId  String
-  category    Category    @relation(fields: [categoryId], references: [id])
+  category    String
   attributes  Json // Key-value pair for attributes like size, color, etc.
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -41,15 +40,6 @@ model Product {
   orderItems  OrderItem[] // Relation to OrderItem
 
   @@map("products")
-}
-
-// Category model with predefined categories
-model Category {
-  id       String       @id @default(cuid())
-  name     CategoryType @unique
-  products Product[] // Relation to Products
-
-  @@map("categories")
 }
 
 // Cart model
@@ -113,14 +103,4 @@ enum OrderStatus {
   PROCESSING
   COMPLETED
   CANCELED
-}
-
-// Enum for predefined categories
-enum CategoryType {
-  ELECTRONICS
-  COMPUTER_THINGS
-  MOBILE_DEVICES
-  HOME_APPLIANCES
-  GAMING
-  OTHER
 }

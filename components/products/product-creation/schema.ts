@@ -1,12 +1,18 @@
 import * as z from "zod";
+const attributeSchema = z.object({
+  key: z.string(),
+  value: z.string(),
+});
 
 export type Category =
   | "Electronics"
-  | "Clothing"
-  | "Home & Garden"
-  | "Toys"
-  | "Books"
-  | "Sports";
+  | "Laptop"
+  | "Smartphone"
+  | "Tablet"
+  | "Desktop"
+  | "Monitor"
+  | "Accessories"
+  | "Keyboard";
 
 export const productSchema = z.object({
   name: z
@@ -19,11 +25,13 @@ export const productSchema = z.object({
     .max(1000, "Description must be 1000 characters or less"),
   category: z.enum([
     "Electronics",
-    "Clothing",
-    "Home & Garden",
-    "Toys",
-    "Books",
-    "Sports",
+    "Laptop",
+    "Smartphone",
+    "Tablet",
+    "Desktop",
+    "Monitor",
+    "Accessories",
+    "Keyboard",
   ] as const),
   stock: z
     .number()
@@ -34,14 +42,7 @@ export const productSchema = z.object({
     .number()
     .positive("Price must be a positive number")
     .max(999999.99, "Price must be less than 1,000,000"),
-  attributes: z
-    .array(
-      z.object({
-        key: z.string().min(1, "Key is required"),
-        value: z.string().min(1, "Value is required"),
-      })
-    )
-    .max(10, "Maximum 10 attributes allowed"),
+  attributes: z.array(attributeSchema).max(10, "Maximum 10 attributes allowed"),
   image: z.instanceof(File).optional(),
 });
 
@@ -49,11 +50,13 @@ export type ProductFormData = z.infer<typeof productSchema>;
 
 export const categories: Category[] = [
   "Electronics",
-  "Clothing",
-  "Home & Garden",
-  "Toys",
-  "Books",
-  "Sports",
+  "Laptop",
+  "Smartphone",
+  "Tablet",
+  "Desktop",
+  "Monitor",
+  "Accessories",
+  "Keyboard",
 ];
 
 export interface ApiResponse {

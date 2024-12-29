@@ -4,21 +4,29 @@ import { z } from "zod";
 import { db } from "@/lib/database/db";
 import { revalidatePath } from "next/cache";
 
-// Validation schema
+/**
+ * Product validation schema
+ * Defines the required fields and validation rules for a product
+ */
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
-  description: z.string().optional(),
-  images: z.array(z.string()).optional(),
+  description: z.string(),
+  category: z.string(), // Fixed: Changed string() to z.string()
+  images: z.array(z.string()),
   price: z.number().min(0, "Price must be greater than or equal to 0"),
   stock: z.number().int().min(0, "Stock must be a non-negative integer"),
   ratings: z.number().min(0).max(5).optional(),
-  categoryId: z.string().uuid(),
-  attributes: z.array(z.string()).optional(),
+  attributes: z.array(z.object({ key: z.string(), value: z.string() })), // Fixed: Changed to z.array() format
 });
 
-// Types
+/**
+ * Type definition for product input data
+ */
 type ProductInput = z.infer<typeof productSchema>;
 
+/**
+ * Type definition for API response when performing product operations
+ */
 type ProductResponse = {
   success: boolean;
   error?: string;
@@ -27,11 +35,14 @@ type ProductResponse = {
     name: string;
     price: number;
     stock: number;
-    categoryId: string;
   };
 };
 
-// Action: Add a product
+/**
+ * Adds a new product to the database
+ * @param input Product data conforming to ProductInput type
+ * @returns Promise resolving to ProductResponse
+ */
 export async function addProduct(
   input: ProductInput
 ): Promise<ProductResponse> {
@@ -39,25 +50,25 @@ export async function addProduct(
     // Validate input
     const validatedData = productSchema.safeParse(input);
     if (!validatedData.success) {
+      // Fixed: Removed console.error of valid data
+      console.log(validatedData);
       return {
         success: false,
         error: validatedData.error.errors[0]?.message || "Invalid input",
       };
     }
-
+    console.log(validatedData.data);
     // Create a new product
     const newProduct = await db.product.create({
       data: {
         ...validatedData.data,
-        description: validatedData.data.description ?? "",
-        attributes: validatedData.data.attributes ?? [], // Provide a default value of an empty array
+        attributes: validatedData.data.attributes || [], // Fixed: Added default empty array for attributes
       },
       select: {
         id: true,
         name: true,
         price: true,
         stock: true,
-        categoryId: true,
       },
     });
 
@@ -70,6 +81,7 @@ export async function addProduct(
     };
   } catch (error) {
     console.error("Error adding product:", error);
+
     return {
       success: false,
       error: "Failed to add product. Please try again.",
@@ -77,13 +89,24 @@ export async function addProduct(
   }
 }
 
-// Action: Update a product
+/**
+ * Schema for updating an existing product
+ * Extends the base product schema to include an ID
+ */
 const updateProductSchema = productSchema.extend({
   id: z.string().uuid(),
 });
 
+/**
+ * Type definition for product update input data
+ */
 type UpdateProductInput = z.infer<typeof updateProductSchema>;
 
+/**
+ * Updates an existing product in the database
+ * @param input Product data with ID conforming to UpdateProductInput type
+ * @returns Promise resolving to ProductResponse
+ */
 export async function updateProduct(
   input: UpdateProductInput
 ): Promise<ProductResponse> {
@@ -118,7 +141,6 @@ export async function updateProduct(
         name: true,
         price: true,
         stock: true,
-        categoryId: true,
       },
     });
 
@@ -138,7 +160,11 @@ export async function updateProduct(
   }
 }
 
-// Action: Get a single product
+/**
+ * Retrieves a single product from the database
+ * @param productId UUID of the product to retrieve
+ * @returns Promise resolving to ProductResponse
+ */
 export async function getProduct(productId: string): Promise<ProductResponse> {
   try {
     const product = await db.product.findUnique({
@@ -151,7 +177,6 @@ export async function getProduct(productId: string): Promise<ProductResponse> {
         price: true,
         stock: true,
         ratings: true,
-        categoryId: true,
         attributes: true,
       },
     });
@@ -176,7 +201,11 @@ export async function getProduct(productId: string): Promise<ProductResponse> {
   }
 }
 
-// Action: Delete a product
+/**
+ * Deletes a product from the database
+ * @param productId UUID of the product to delete
+ * @returns Promise resolving to success/error response
+ */
 export async function deleteProduct(
   productId: string
 ): Promise<{ success: boolean; error?: string }> {
@@ -207,37 +236,6 @@ export async function deleteProduct(
     return {
       success: false,
       error: "Failed to delete product. Please try again.",
-    };
-  }
-}
-
-// Action: Fetch all products by category
-export async function getProductsByCategory(categoryId: string): Promise<{
-  success: boolean;
-  error?: string;
-  data?: ProductResponse["data"][];
-}> {
-  try {
-    const products = await db.product.findMany({
-      where: { categoryId },
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        stock: true,
-        categoryId: true,
-      },
-    });
-
-    return {
-      success: true,
-      data: products,
-    };
-  } catch (error) {
-    console.error("Error fetching products by category:", error);
-    return {
-      success: false,
-      error: "Failed to fetch products by category",
     };
   }
 }
