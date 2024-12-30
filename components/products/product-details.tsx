@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { addToCart } from "@/lib/actions/product/cart/actions";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 // const product = {
 //   name: "Ergonomic Desk Chair",
@@ -47,10 +48,12 @@ export type Product = {
 
 export default function ProductDetails({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const handleAddToCart = async () => {
-    console.log(quantity, product.id);
+  const handleAddToCart = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
+      setIsSubmitting(true);
       const response = await addToCart({
         productId: product.id,
         quantity,
@@ -74,6 +77,8 @@ export default function ProductDetails({ product }: { product: Product }) {
     } catch (error) {
       console.error("Error adding item to cart:", error);
       // Optionally, show an error message
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -142,9 +147,18 @@ export default function ProductDetails({ product }: { product: Product }) {
             </Button>
           </div>
         </div>
-        <Button className="w-full" size="lg" onClick={handleAddToCart}>
-          Add to Cart
-        </Button>
+        <form onSubmit={handleAddToCart}>
+          <Button className="w-full" size="lg" type="submit">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin" />
+                Adding to cart...
+              </>
+            ) : (
+              "Add to cart"
+            )}
+          </Button>
+        </form>
         <div className="flex items-center justify-between">
           <Badge variant="secondary">Free Shipping</Badge>
           <Badge variant="secondary">In Stock</Badge>

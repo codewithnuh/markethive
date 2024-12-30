@@ -64,12 +64,12 @@ export async function addToCart(
         error: validatedData.error.errors[0]?.message || "Invalid input",
       };
     }
-
+    console.log(userId);
     // Get or create user's cart
     let cart = await db.cart.findFirst({
       where: { userId },
     });
-
+    console.log({ thisIsCart: cart });
     if (!cart) {
       cart = await db.cart.create({
         data: { userId },
@@ -154,6 +154,154 @@ export async function addToCart(
     return {
       success: false,
       error: "Failed to add item to cart",
+    };
+  }
+}
+
+/**
+ * Response type for getCart action
+ */
+type GetCartResponse = {
+  success: boolean;
+  error?: string;
+  data?: Array<{
+    id: string;
+    quantity: number;
+    product: {
+      id: string;
+      name: string;
+      price: number;
+      images: string[];
+    };
+  }>;
+};
+
+/**
+ * Retrieves all items in the user's cart
+ * @returns {Promise<GetCartResponse>} The cart items or error response
+ */
+export async function getCart(): Promise<GetCartResponse> {
+  try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return {
+        success: false,
+        error: "Please sign in to view cart",
+      };
+    }
+
+    // Get user's cart
+    const cart = await db.cart.findFirst({
+      where: { userId },
+    });
+
+    if (!cart) {
+      return {
+        success: true,
+        data: [], // Return empty array if no cart exists
+      };
+    }
+
+    // Get cart items with product details
+    const cartItems = await db.cartItem.findMany({
+      where: {
+        cartId: cart.id,
+      },
+      select: {
+        id: true,
+        quantity: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            images: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: cartItems,
+    };
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    return {
+      success: false,
+      error: "Failed to fetch cart items",
+    };
+  }
+}
+
+/**
+ * Response type for cart item operations
+ */
+type CartItemResponse = {
+  success: boolean;
+  error?: string;
+};
+
+/**
+ * Updates the quantity of a cart item
+ * @param {Object} input - Update input data
+ * @param {string} input.id - Cart item ID
+ * @param {number} input.quantity - New quantity
+ */
+
+export async function updateCartItem(input: {
+  id: string;
+  quantity: number;
+}): Promise<CartItemResponse> {
+  try {
+    await db.cartItem.update({
+      where: { id: input.id },
+      data: { quantity: input.quantity },
+    });
+
+    revalidatePath("/cart");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating cart item:", error);
+    return {
+      success: false,
+      error: "Failed to update cart item",
+    };
+  }
+}
+
+/**
+ * Removes an item from the cart
+ * @param {string} id - Cart item ID to remove
+ */
+export async function removeFromCart(id: string): Promise<CartItemResponse> {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return {
+        success: false,
+        error: "Please sign in to remove items",
+      };
+    }
+
+    // Delete cart item
+    await db.cartItem.delete({
+      where: {
+        id,
+        cart: {
+          userId,
+        },
+      },
+    });
+
+    revalidatePath("/cart");
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing cart item:", error);
+    return {
+      success: false,
+      error: "Failed to remove cart item",
     };
   }
 }

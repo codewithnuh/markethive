@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -10,38 +10,57 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Loader2 } from "lucide-react";
 import CartItem from "./cart-item";
+import { getCart } from "@/lib/actions/product/cart/actions";
+import { useToast } from "@/hooks/use-toast";
 
-// This would typically come from your global state management
-const initialCartItems = [
-  {
-    id: 1,
-    name: "Product 1",
-    price: 19.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    id: 2,
-    name: "Product 2",
-    price: 29.99,
-    quantity: 2,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    id: 3,
-    name: "Product 3",
-    price: 39.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-];
+// Define proper interface based on your API response
+interface CartItemType {
+  id: string;
+  quantity: number;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    images: string[];
+  };
+}
 
 export default function CartSidebar() {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const [cartItems, setCartItems] = useState<CartItemType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  const updateQuantity = (id: number, newQuantity: number) => {
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        const result = await getCart();
+        if (result.success && result.data) {
+          setCartItems(result.data);
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: result.error || "Failed to fetch cart items",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching cart:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch cart items",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCartItems();
+  });
+
+  const updateQuantity = (id: string, newQuantity: number) => {
     setCartItems((items) =>
       items.map((item) =>
         item.id === id ? { ...item, quantity: Math.max(0, newQuantity) } : item
@@ -49,12 +68,12 @@ export default function CartSidebar() {
     );
   };
 
-  const removeItem = (id: number) => {
+  const removeItem = (id: string) => {
     setCartItems((items) => items.filter((item) => item.id !== id));
   };
 
   const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + item.product.price * item.quantity,
     0
   );
 
@@ -73,14 +92,30 @@ export default function CartSidebar() {
           <SheetTitle>Your Cart</SheetTitle>
         </SheetHeader>
         <ScrollArea className="flex-grow">
-          {cartItems.map((item) => (
-            <CartItem
-              key={item.id}
-              item={item}
-              updateQuantity={updateQuantity}
-              removeItem={removeItem}
-            />
-          ))}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : cartItems.length === 0 ? (
+            <div className="flex justify-center items-center h-40 text-muted-foreground">
+              Your cart is empty
+            </div>
+          ) : (
+            cartItems.map((item) => (
+              <CartItem
+                key={item.id}
+                item={{
+                  id: item.id,
+                  name: item.product.name,
+                  price: item.product.price,
+                  quantity: item.quantity,
+                  image: item.product.images[0],
+                }}
+                updateQuantity={updateQuantity}
+                removeItem={removeItem}
+              />
+            ))
+          )}
         </ScrollArea>
         <div className="border-t pt-4 mt-4">
           <div className="flex justify-between items-center mb-4">
@@ -89,7 +124,12 @@ export default function CartSidebar() {
               ${totalPrice.toFixed(2)}
             </span>
           </div>
-          <Button className="w-full">Checkout</Button>
+          <Button
+            className="w-full"
+            disabled={isLoading || cartItems.length === 0}
+          >
+            Checkout
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

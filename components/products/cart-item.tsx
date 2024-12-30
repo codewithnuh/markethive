@@ -1,18 +1,27 @@
+// components/products/cart-item.tsx
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, X } from "lucide-react";
+import debounce from "lodash/debounce";
+import {
+  updateCartItem,
+  removeFromCart,
+} from "@/lib/actions/product/cart/actions";
 
 interface CartItemProps {
   item: {
-    id: number;
+    id: string;
     name: string;
     price: number;
     quantity: number;
     image: string;
   };
-  updateQuantity: (id: number, newQuantity: number) => void;
-  removeItem: (id: number) => void;
+  updateQuantity: (id: string, newQuantity: number) => void;
+  removeItem: (id: string) => void;
 }
 
 export default function CartItem({
@@ -20,6 +29,45 @@ export default function CartItem({
   updateQuantity,
   removeItem,
 }: CartItemProps) {
+  const [localQuantity, setLocalQuantity] = useState(item.quantity);
+
+  // Reset local quantity when item quantity props changes
+  useEffect(() => {
+    setLocalQuantity(item.quantity);
+  }, [item.quantity]);
+
+  // Debounced database update
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedUpdateQuantity = useCallback(
+    debounce(async (id: string, quantity: number) => {
+      const result = await updateCartItem({ id, quantity });
+      if (result.success) {
+        updateQuantity(id, quantity);
+      }
+    }, 500),
+    []
+  );
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity < 1) return;
+    setLocalQuantity(newQuantity);
+    debouncedUpdateQuantity(item.id, newQuantity);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value)) {
+      handleQuantityChange(value);
+    }
+  };
+
+  const handleRemove = async () => {
+    const result = await removeFromCart(item.id);
+    if (result.success) {
+      removeItem(item.id);
+    }
+  };
+
   return (
     <div className="flex items-center space-x-4 py-4 border-b last:border-b-0">
       <div className="relative h-16 w-16 flex-shrink-0">
@@ -41,24 +89,22 @@ export default function CartItem({
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+            onClick={() => handleQuantityChange(localQuantity - 1)}
           >
             <Minus className="h-4 w-4" />
           </Button>
           <Input
             type="number"
-            min="0"
-            value={item.quantity}
-            onChange={(e) =>
-              updateQuantity(item.id, parseInt(e.target.value, 10))
-            }
+            min="1"
+            value={localQuantity}
+            onChange={handleInputChange}
             className="h-8 w-12 mx-2 text-center"
           />
           <Button
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+            onClick={() => handleQuantityChange(localQuantity + 1)}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -68,7 +114,7 @@ export default function CartItem({
         variant="ghost"
         size="icon"
         className="flex-shrink-0"
-        onClick={() => removeItem(item.id)}
+        onClick={handleRemove}
       >
         <X className="h-4 w-4" />
       </Button>
