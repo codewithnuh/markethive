@@ -10,7 +10,10 @@ import { revalidatePath } from "next/cache";
  */
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
-  description: z.string(),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters")
+    .max(2000, "Description must be 1000 characters or less"),
   category: z.string(), // Fixed: Changed string() to z.string()
   images: z.array(z.string()),
   price: z.number().min(0, "Price must be greater than or equal to 0"),

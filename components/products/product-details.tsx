@@ -15,26 +15,37 @@ import { Badge } from "@/components/ui/badge";
 import { addToCart } from "@/lib/actions/product/cart/actions";
 import { useToast } from "@/hooks/use-toast";
 
-const product = {
-  name: "Ergonomic Desk Chair",
-  description:
-    "Experience ultimate comfort with our ergonomic desk chair. Designed to support your body during long work hours, this chair features adjustable lumbar support, breathable mesh back, and customizable armrests.",
-  price: 299.99,
-  images: [
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-  ],
-  attributes: [
-    { name: "Material", value: "Mesh and High-grade Plastic" },
-    { name: "Color", value: "Black" },
-    { name: "Weight Capacity", value: "300 lbs" },
-    { name: "Adjustable Height", value: "Yes" },
-  ],
-  id: "23", // Add a product ID for demonstration
+// const product = {
+//   name: "Ergonomic Desk Chair",
+//   description:
+//     "Experience ultimate comfort with our ergonomic desk chair. Designed to support your body during long work hours, this chair features adjustable lumbar support, breathable mesh back, and customizable armrests.",
+//   price: 299.99,
+//   images: [
+//     "/placeholder.svg?height=400&width=400",
+//     "/placeholder.svg?height=400&width=400",
+//     "/placeholder.svg?height=400&width=400",
+//   ],
+//   attributes: [
+//     { name: "Material", value: "Mesh and High-grade Plastic" },
+//     { name: "Color", value: "Black" },
+//     { name: "Weight Capacity", value: "300 lbs" },
+//     { name: "Adjustable Height", value: "Yes" },
+//   ],
+//   id: "23", // Add a product ID for demonstration
+// };
+
+export type Product = {
+  id: string;
+  description: string;
+  name: string;
+  images: string[];
+  price: number;
+  stock: number;
+  ratings: number;
+  attributes?: Array<{ key: string; value: string }>;
 };
 
-export default function ProductDetails() {
+export default function ProductDetails({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const { toast } = useToast();
   const handleAddToCart = async () => {
@@ -97,14 +108,17 @@ export default function ProductDetails() {
         <p className="text-muted-foreground">{product.description}</p>
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">Attributes</h2>
-          <ul className="space-y-1">
-            {product.attributes.map((attr, index) => (
-              <li key={index} className="flex justify-between">
-                <span className="font-medium">{attr.name}:</span>
-                <span className="text-muted-foreground">{attr.value}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="flex space-x-2 flex-wrap">
+            {product?.attributes &&
+              product.attributes.map((attr) => (
+                <div key={attr.key} className="flex  items-center space-x-2">
+                  <span className="text-sm font-medium">{attr.key}:</span>
+                  <Badge variant="outline" className="text-xs">
+                    {attr.value}
+                  </Badge>
+                </div>
+              ))}
+          </div>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-2xl font-bold">

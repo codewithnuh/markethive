@@ -32,7 +32,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <Heart className="w-5 h-5" />
       </Button>
       <CardContent className="flex-grow p-4">
-        <div className="aspect-square relative mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+        <div className="h-60 relative mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
           <Image
             src={product.images[currentImageIndex]}
             alt={product.name}
@@ -74,17 +74,21 @@ export default function ProductCard({ product }: { product: Product }) {
               {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
             </p>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">RAM:</span>
-            <Badge variant="outline">
-              {product.attributes.find((attr) => attr.key === "RAM")?.value}
-            </Badge>
-          </div>
+          {/* <div className="flex space-x-2 flex-wrap">
+            {product.attributes.map((attr) => (
+              <div key={attr.key} className="flex  items-center space-x-2">
+                <span className="text-sm font-medium">{attr.key}:</span>
+                <Badge variant="outline" className="text-xs">
+                  {attr.value}
+                </Badge>
+              </div>
+            ))}
+          </div> */}
         </div>
       </CardContent>
       <CardFooter className="p-4">
         <Button className="w-full" asChild>
-          <Link href={`/product/${product.id}`}>Add to cart</Link>
+          <Link href={`/product/${product.id}`}>View Details</Link>
         </Button>
       </CardFooter>
     </Card>

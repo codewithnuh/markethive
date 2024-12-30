@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       ],
       // AI generation parameters
       temperature: 0.7, // Balanced between creativity and consistency
-      maxTokens: 300, // Increased for longer descriptions
+      maxTokens: 200, // Increased for longer descriptions
       topP: 0.9, // Slightly reduced for more focused outputs
       frequencyPenalty: 0.6, // Increased to reduce repetitive phrases
       presencePenalty: 0.6, // Increased to encourage diverse language

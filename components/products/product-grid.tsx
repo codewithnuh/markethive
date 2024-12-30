@@ -20,9 +20,13 @@ type ProductGridType = {
 export default function ProductGrid({ products }: ProductGridType) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
+      {products.length <= 0 ? (
+        <p>No products found</p>
+      ) : (
+        products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))
+      )}
     </div>
   );
 }

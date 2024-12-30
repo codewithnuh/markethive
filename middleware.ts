@@ -10,8 +10,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   try {
     const { userId } = await auth(); // Get session claims directly from auth()
 
-    // Determine if the user is the author/admin
-    const isAuthor = userId == process.env.AUTH_ID;
+    // Determine if the user is the admin
+    const isAdmin = userId == process.env.AUTH_ID;
 
     if (!userId) {
       // Public users should not access any protected routes
@@ -24,7 +24,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     if (userId) {
       if (isCustomerRoute(req)) {
         // Redirect customers trying to access admin routes
-        if (!isAuthor && isAdminRoute(req)) {
+        if (!isAdmin && isAdminRoute(req)) {
           url.pathname = "/";
           return NextResponse.redirect(url);
         }
@@ -34,7 +34,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
       if (isAdminRoute(req)) {
         // Restrict admin routes to only authors
-        if (!isAuthor) {
+        if (!isAdmin) {
           url.pathname = "/sign-in";
           return NextResponse.redirect(url);
         }
