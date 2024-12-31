@@ -14,8 +14,8 @@ import { ShoppingCart, Loader2 } from "lucide-react";
 import CartItem from "./cart-item";
 import { getCart } from "@/lib/actions/product/cart/actions";
 import { useToast } from "@/hooks/use-toast";
+import { createCheckoutSession } from "@/lib/actions/stripe/actions";
 
-// Define proper interface based on your API response
 interface CartItemType {
   id: string;
   quantity: number;
@@ -30,35 +30,40 @@ interface CartItemType {
 export default function CartSidebar() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
+  // Fetch cart items only when the sheet is opened
   useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        const result = await getCart();
-        if (result.success && result.data) {
-          setCartItems(result.data);
-        } else {
+    if (isOpen) {
+      const fetchCartItems = async () => {
+        try {
+          setIsLoading(true);
+          const result = await getCart();
+          if (result.success && result.data) {
+            setCartItems(result.data);
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: result.error || "Failed to fetch cart items",
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching cart:", error);
           toast({
             variant: "destructive",
             title: "Error",
-            description: result.error || "Failed to fetch cart items",
+            description: "Failed to fetch cart items",
           });
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching cart:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch cart items",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      };
 
-    fetchCartItems();
-  });
+      fetchCartItems();
+    }
+  }, [isOpen, toast]); // Only re-run when sheet opens or toast changes
 
   const updateQuantity = (id: string, newQuantity: number) => {
     setCartItems((items) =>
@@ -77,8 +82,21 @@ export default function CartSidebar() {
     0
   );
 
+  const handleCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createCheckoutSession();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Checkout Error",
+        description: error instanceof Error ? error.message : "Checkout failed",
+      });
+    }
+  };
+
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
@@ -124,12 +142,15 @@ export default function CartSidebar() {
               ${totalPrice.toFixed(2)}
             </span>
           </div>
-          <Button
-            className="w-full"
-            disabled={isLoading || cartItems.length === 0}
-          >
-            Checkout
-          </Button>
+          <form onSubmit={handleCheckout}>
+            <Button
+              className="w-full"
+              type="submit"
+              disabled={isLoading || cartItems.length === 0}
+            >
+              Checkout
+            </Button>
+          </form>
         </div>
       </SheetContent>
     </Sheet>

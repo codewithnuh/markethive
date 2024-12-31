@@ -75,9 +75,6 @@ export async function addProduct(
       },
     });
 
-    // Revalidate paths
-    revalidatePath("/products");
-
     return {
       success: true,
       data: newProduct,
@@ -146,9 +143,6 @@ export async function updateProduct(
         stock: true,
       },
     });
-
-    // Revalidate paths
-    revalidatePath("/products");
 
     return {
       success: true,

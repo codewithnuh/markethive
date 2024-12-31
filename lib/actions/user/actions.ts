@@ -175,7 +175,7 @@ export async function getUser(): Promise<UserResponse> {
 /**
  * Update user data
  */
-//footballhdlm@gmail.com
+
 export async function updateUser(
   input: UpdateUserInput
 ): Promise<UserResponse> {

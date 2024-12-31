@@ -1,12 +1,10 @@
-// components/products/cart-item.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, X } from "lucide-react";
-import debounce from "lodash/debounce";
 import {
   updateCartItem,
   removeFromCart,
@@ -24,49 +22,73 @@ interface CartItemProps {
   removeItem: (id: string) => void;
 }
 
-export default function CartItem({
+export default memo(function CartItem({
   item,
   updateQuantity,
   removeItem,
 }: CartItemProps) {
   const [localQuantity, setLocalQuantity] = useState(item.quantity);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Reset local quantity when item quantity props changes
+  // Sync with external changes
   useEffect(() => {
     setLocalQuantity(item.quantity);
   }, [item.quantity]);
 
-  // Debounced database update
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedUpdateQuantity = useCallback(
-    debounce(async (id: string, quantity: number) => {
-      const result = await updateCartItem({ id, quantity });
-      if (result.success) {
-        updateQuantity(id, quantity);
+  const handleQuantityUpdate = useCallback(
+    async (newQuantity: number) => {
+      if (newQuantity < 1 || newQuantity === item.quantity || isUpdating)
+        return;
+
+      try {
+        setIsUpdating(true);
+        const result = await updateCartItem({
+          id: item.id,
+          quantity: newQuantity,
+        });
+
+        if (result.success) {
+          setLocalQuantity(newQuantity);
+          updateQuantity(item.id, newQuantity);
+        } else {
+          // Revert on failure
+          setLocalQuantity(item.quantity);
+        }
+      } catch (error) {
+        console.error("Update failed:", error);
+        setLocalQuantity(item.quantity);
+      } finally {
+        setIsUpdating(false);
       }
-    }, 500),
-    []
+    },
+    [item.id, item.quantity, updateQuantity, isUpdating]
   );
 
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity < 1) return;
-    setLocalQuantity(newQuantity);
-    debouncedUpdateQuantity(item.id, newQuantity);
-  };
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value)) {
+        handleQuantityUpdate(value);
+      }
+    },
+    [handleQuantityUpdate]
+  );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value)) {
-      handleQuantityChange(value);
-    }
-  };
+  const handleRemove = useCallback(async () => {
+    if (isUpdating) return;
 
-  const handleRemove = async () => {
-    const result = await removeFromCart(item.id);
-    if (result.success) {
-      removeItem(item.id);
+    try {
+      setIsUpdating(true);
+      const result = await removeFromCart(item.id);
+      if (result.success) {
+        removeItem(item.id);
+      }
+    } catch (error) {
+      console.error("Remove failed:", error);
+    } finally {
+      setIsUpdating(false);
     }
-  };
+  }, [item.id, removeItem, isUpdating]);
 
   return (
     <div className="flex items-center space-x-4 py-4 border-b last:border-b-0">
@@ -89,7 +111,8 @@ export default function CartItem({
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => handleQuantityChange(localQuantity - 1)}
+            onClick={() => handleQuantityUpdate(localQuantity - 1)}
+            disabled={isUpdating}
           >
             <Minus className="h-4 w-4" />
           </Button>
@@ -99,12 +122,14 @@ export default function CartItem({
             value={localQuantity}
             onChange={handleInputChange}
             className="h-8 w-12 mx-2 text-center"
+            disabled={isUpdating}
           />
           <Button
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => handleQuantityChange(localQuantity + 1)}
+            onClick={() => handleQuantityUpdate(localQuantity + 1)}
+            disabled={isUpdating}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -115,9 +140,10 @@ export default function CartItem({
         size="icon"
         className="flex-shrink-0"
         onClick={handleRemove}
+        disabled={isUpdating}
       >
         <X className="h-4 w-4" />
       </Button>
     </div>
   );
-}
+});

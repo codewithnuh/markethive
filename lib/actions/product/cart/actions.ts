@@ -3,7 +3,6 @@
 
 import { db } from "@/lib/database/db";
 import { auth } from "@clerk/nextjs/server";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 /**
@@ -64,12 +63,11 @@ export async function addToCart(
         error: validatedData.error.errors[0]?.message || "Invalid input",
       };
     }
-    console.log(userId);
     // Get or create user's cart
     let cart = await db.cart.findFirst({
       where: { userId },
     });
-    console.log({ thisIsCart: cart });
+
     if (!cart) {
       cart = await db.cart.create({
         data: { userId },
@@ -141,9 +139,6 @@ export async function addToCart(
         },
       });
     }
-
-    // Revalidate cart page
-    revalidatePath("/cart");
 
     return {
       success: true,
@@ -260,7 +255,6 @@ export async function updateCartItem(input: {
       data: { quantity: input.quantity },
     });
 
-    revalidatePath("/cart");
     return { success: true };
   } catch (error) {
     console.error("Error updating cart item:", error);
@@ -294,8 +288,6 @@ export async function removeFromCart(id: string): Promise<CartItemResponse> {
         },
       },
     });
-
-    revalidatePath("/cart");
     return { success: true };
   } catch (error) {
     console.error("Error removing cart item:", error);
