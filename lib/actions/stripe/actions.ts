@@ -4,12 +4,49 @@ import { auth } from "@clerk/nextjs/server";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/database/db";
 
+/**
+ * Response type for checkout order operations
+ */
 type CheckoutOrderResponse = {
   success: boolean;
   error?: string;
   url?: string;
 };
 
+/**
+ * Response type for successful checkout handling
+ */
+type CheckoutSuccessResponse = {
+  success: boolean;
+  orderId: string;
+};
+
+/**
+ * Custom error types
+ */
+class CheckoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CheckoutError";
+  }
+}
+
+class SessionMetadataError extends CheckoutError {
+  constructor() {
+    super("Missing required metadata in the session");
+  }
+}
+
+class CartError extends CheckoutError {
+  constructor() {
+    super("Cart not found or is empty");
+  }
+}
+
+/**
+ * Creates a Stripe checkout session for the user's cart items
+ * @returns Promise<CheckoutOrderResponse> containing success status, error message if any, and checkout URL if successful
+ */
 export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
   try {
     const { userId } = await auth();
@@ -65,8 +102,8 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
         cartId: cart.id,
         userId: userId,
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
     });
 
     if (stripeSession.url) {
@@ -81,7 +118,12 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
       error: "Failed to create Stripe session",
     };
   } catch (error) {
-    console.error("Checkout error:", error);
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: error.message || "Failed to create checkout session",
+      };
+    }
     return {
       success: false,
       error: "Failed to create checkout session",
@@ -89,15 +131,21 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
   }
 }
 
-// Handle successful checkout
-
-export async function handleCheckoutSuccess(sessionId: string) {
+/**
+ * Handles successful checkout by creating an order and clearing the cart
+ * @param sessionId - The Stripe checkout session ID
+ * @returns Promise<CheckoutSuccessResponse> containing success status and order ID
+ * @throws CheckoutError if session metadata is missing or cart cannot be found
+ */
+export async function handleCheckoutSuccess(
+  sessionId: string
+): Promise<CheckoutSuccessResponse> {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const { cartId, userId } = session.metadata || {};
 
     if (!cartId || !userId) {
-      throw new Error("Missing required metadata in the session");
+      throw new SessionMetadataError();
     }
 
     // Retrieve cart
@@ -113,13 +161,13 @@ export async function handleCheckoutSuccess(sessionId: string) {
     });
 
     if (!cart || !cart.cartItems.length) {
-      throw new Error("Cart not found or is empty");
+      throw new CartError();
     }
 
     // Create order
     const order = await db.order.create({
       data: {
-        userId,
+        userId: userId,
         totalPrice: session.amount_total ? session.amount_total / 100 : 0, // Convert back to dollars
         status: "PROCESSING",
         orderItems: {
@@ -142,7 +190,9 @@ export async function handleCheckoutSuccess(sessionId: string) {
       orderId: order.id,
     };
   } catch (error) {
-    console.error("Error handling checkout success:", error);
-    throw new Error("Failed to handle checkout success");
+    if (error instanceof CheckoutError) {
+      throw error;
+    }
+    throw new CheckoutError("Failed to handle checkout success");
   }
 }

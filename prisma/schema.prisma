@@ -71,8 +71,8 @@ model CartItem {
 // Order model
 model Order {
   id         String      @id @default(cuid())
-  userId     String
-  user       User        @relation(fields: [userId], references: [id])
+  userId     String // Reference to clerkId instead of id
+  user       User        @relation(fields: [userId], references: [clerkId]) // Use clerkId as the reference
   orderItems OrderItem[] // Relation to OrderItem
   status     OrderStatus @default(PENDING) // Enum for order status
   totalPrice Float
