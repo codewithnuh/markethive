@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
+import { useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -33,6 +33,7 @@ export default function CartSidebar() {
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   // Fetch cart items only when the sheet is opened
   useEffect(() => {
@@ -87,11 +88,7 @@ export default function CartSidebar() {
     try {
       const result = await createCheckoutSession();
       if (result.success) {
-        toast({
-          variant: "default",
-          title: "Redirecting to checkout",
-          description: "Redirecting to checkout",
-        });
+        router.push(result.url as string);
       }
       toast({
         variant: "default",
