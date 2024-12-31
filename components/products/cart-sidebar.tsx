@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
 import {
   Sheet,
   SheetContent,
@@ -82,10 +83,21 @@ export default function CartSidebar() {
     0
   );
 
-  const handleCheckout = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCheckout = async () => {
     try {
-      await createCheckoutSession();
+      const result = await createCheckoutSession();
+      if (result.success) {
+        toast({
+          variant: "default",
+          title: "Redirecting to checkout",
+          description: "Redirecting to checkout",
+        });
+      }
+      toast({
+        variant: "default",
+        title: "Checkout Completed",
+        description: "Checkout completed",
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -142,7 +154,7 @@ export default function CartSidebar() {
               ${totalPrice.toFixed(2)}
             </span>
           </div>
-          <form onSubmit={handleCheckout}>
+          <form action={handleCheckout}>
             <Button
               className="w-full"
               type="submit"

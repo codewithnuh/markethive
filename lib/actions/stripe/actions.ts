@@ -90,6 +90,7 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
 }
 
 // Handle successful checkout
+
 export async function handleCheckoutSuccess(sessionId: string) {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
