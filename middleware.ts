@@ -12,7 +12,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
     // Determine if the user is the admin
     const isAdmin = userId == process.env.AUTH_ID;
-
+    console.log(isAdmin);
     if (!userId) {
       // Public users should not access any protected routes
       if (isCustomerRoute(req) || isAdminRoute(req)) {

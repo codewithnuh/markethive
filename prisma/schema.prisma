@@ -43,10 +43,11 @@ model Product {
 }
 
 // Cart model
+// Cart model
 model Cart {
   id        String     @id @default(cuid())
   userId    String
-  user      User       @relation(fields: [userId], references: [clerkId])
+  user      User       @relation(fields: [userId], references: [clerkId], onDelete: Cascade) // Cascade delete
   cartItems CartItem[] // Relation to CartItem
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -58,7 +59,7 @@ model Cart {
 model CartItem {
   id        String   @id @default(cuid())
   cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id])
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade) // Cascade delete
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int      @default(1)
@@ -71,10 +72,10 @@ model CartItem {
 // Order model
 model Order {
   id         String      @id @default(cuid())
-  userId     String // Reference to clerkId instead of id
-  user       User        @relation(fields: [userId], references: [clerkId]) // Use clerkId as the reference
+  userId     String
+  user       User        @relation(fields: [userId], references: [clerkId], onDelete: Cascade) // Cascade delete
   orderItems OrderItem[] // Relation to OrderItem
-  status     OrderStatus @default(PENDING) // Enum for order status
+  status     OrderStatus @default(PROCESSING)
   totalPrice Float
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
@@ -86,11 +87,11 @@ model Order {
 model OrderItem {
   id        String   @id @default(cuid())
   orderId   String
-  order     Order    @relation(fields: [orderId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade) // Cascade delete
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Float // Price at the time of order
+  price     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -99,8 +100,7 @@ model OrderItem {
 
 // Enum for order status
 enum OrderStatus {
-  PENDING
   PROCESSING
-  COMPLETED
-  CANCELED
+  SHIPPING
+  SHIPPED
 }

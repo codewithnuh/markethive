@@ -67,13 +67,14 @@ export async function addToCart(
     let cart = await db.cart.findFirst({
       where: { userId },
     });
+    console.log(userId);
 
     if (!cart) {
       cart = await db.cart.create({
         data: { userId },
       });
     }
-
+    console.log(cart);
     // Check if product exists and has enough stock
     const product = await db.product.findUnique({
       where: { id: validatedData.data.productId },

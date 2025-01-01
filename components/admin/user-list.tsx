@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,24 +9,43 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { User } from "./admin-dashboard";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "@/hooks/use-toast";
+import {
+  DialogTitle,
+  DialogContent,
+  DialogTrigger,
+  Dialog,
+  DialogFooter,
+  DialogHeader,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-};
+export function UsersList({ users }: { users: User[] }) {
+  // const [users, setUsers] = useState<User[]>(initialUsers);
+  const { user } = useUser();
 
-const initialUsers: User[] = [
-  { id: "1", name: "John Doe", email: "john@example.com" },
-  { id: "2", name: "Jane Smith", email: "jane@example.com" },
-  { id: "3", name: "Bob Johnson", email: "bob@example.com" },
-];
+  const handleDelete = async (id: string) => {
+    try {
+      const deletedUser = await user?.delete();
 
-export function UsersList() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+      if (deletedUser) {
+        toast({
+          title: "User Deleted",
+          description: "User deleted successfully",
+          variant: "default",
+        });
+      }
 
-  const handleDelete = (id: string) => {
-    setUsers(users.filter((user) => user.id !== id));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -43,16 +61,33 @@ export function UsersList() {
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.name}</TableCell>
+            <TableRow key={user.clerkId}>
+              <TableCell>{user.firstName + " " + user.lastName}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDelete(user.id)}
-                >
-                  Delete
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive">Delete</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Delete User</DialogTitle>
+                      <DialogDescription>
+                        Do you really want to delete user account
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                      <Button
+                        onClick={() =>
+                          handleDelete("user_2qysYzIe5DK1tBdbQBIiBQ1mRbG")
+                        }
+                      >
+                        Confirm
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </TableCell>
             </TableRow>
           ))}
