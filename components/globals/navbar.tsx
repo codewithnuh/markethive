@@ -11,7 +11,7 @@ const NavBar = () => {
       <nav className="container py-8 flex justify-between items-center">
         <div className="font-bold text-xl uppercase tracking-wide">
           <Link href={"/"}>
-            Market<span className="text-primary">Hive</span>
+            Market<span className="text-[#e23a39]">Hive</span>
           </Link>
         </div>
         <div className="flex items-center space-x-4">

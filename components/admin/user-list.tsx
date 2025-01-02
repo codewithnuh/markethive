@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { User } from "./admin-dashboard";
-import { useUser } from "@clerk/nextjs";
 import { toast } from "@/hooks/use-toast";
 import {
   DialogTitle,
@@ -21,14 +20,12 @@ import {
   DialogHeader,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { deleteClerkAccount } from "@/lib/actions/user/actions";
 
 export function UsersList({ users }: { users: User[] }) {
-  // const [users, setUsers] = useState<User[]>(initialUsers);
-  const { user } = useUser();
-
   const handleDelete = async (id: string) => {
     try {
-      const deletedUser = await user?.delete();
+      const deletedUser = await deleteClerkAccount(id);
 
       if (deletedUser) {
         toast({
@@ -78,11 +75,7 @@ export function UsersList({ users }: { users: User[] }) {
                     </DialogHeader>
 
                     <DialogFooter>
-                      <Button
-                        onClick={() =>
-                          handleDelete("user_2qysYzIe5DK1tBdbQBIiBQ1mRbG")
-                        }
-                      >
+                      <Button onClick={() => handleDelete(user.clerkId)}>
                         Confirm
                       </Button>
                     </DialogFooter>

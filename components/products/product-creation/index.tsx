@@ -16,7 +16,6 @@ import { UploadButton } from "@/lib/uploadthing";
 import { useToast } from "@/hooks/use-toast";
 import { addProduct } from "@/lib/actions/product/actions";
 import { Loader2 } from "lucide-react";
-
 interface SubmitButtonProps {
   text: string;
   isLoading: boolean;
@@ -37,7 +36,13 @@ function SubmitButton({ text, isLoading }: SubmitButtonProps) {
   );
 }
 
-export default function ProductCreationForm() {
+export default function ProductCreationForm({
+  type,
+  product,
+}: {
+  type: "Create" | "Update";
+  product?: any;
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [productPictures, setProductPictures] = useState<string[]>([]);
@@ -45,7 +50,13 @@ export default function ProductCreationForm() {
   const [attributes, setAttributes] = useState<
     { key: string; value: string }[]
   >([]);
-
+  const defaultValues = {
+    name: "",
+    description: "",
+    stock: 0,
+    price: 0,
+    attributes: [],
+  };
   const {
     register,
     handleSubmit,
@@ -55,13 +66,7 @@ export default function ProductCreationForm() {
     watch,
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      stock: 0,
-      price: 0,
-      attributes: [],
-    },
+    defaultValues,
   });
 
   const onSubmit = async (data: ProductFormData) => {
@@ -89,9 +94,12 @@ export default function ProductCreationForm() {
     };
 
     try {
-      const result = await addProduct(JSON.parse(JSON.stringify(payload)));
+      let result;
+      if (type === "Create") {
+        result = await addProduct(JSON.parse(JSON.stringify(payload)));
+      }
 
-      if (result.success) {
+      if (result!.success) {
         // Reset form state
         setValue("name", "");
         setValue("description", "");
@@ -111,7 +119,7 @@ export default function ProductCreationForm() {
         toast({
           variant: "destructive",
           title: "Product Creation Failed",
-          description: result.error,
+          description: result!.error,
         });
       }
     } catch (error) {

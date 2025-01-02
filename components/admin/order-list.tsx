@@ -29,6 +29,7 @@ import {
 import { Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "./admin-dashboard";
+import { updateOrderStatus } from "@/lib/actions/product/orders/actions";
 
 enum OrderStatus {
   Processing = "PROCESSING",
@@ -97,29 +98,32 @@ export function OrdersList({ orders }: { orders: Order[] }) {
 
     setIsUpdating(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await updateOrderStatus(selectedOrder.id, pendingStatus);
 
-      setOrders(
-        orders.map((order) =>
-          order.id === selectedOrder.id
-            ? { ...order, status: pendingStatus }
-            : order
-        )
-      );
+      if (result.success) {
+        // Update the orders in the UI
+        setOrders(
+          orders.map((order) =>
+            order.id === selectedOrder.id ? result.data : order
+          )
+        );
 
-      toast({
-        title: "Order Updated",
-        description: `Order #${selectedOrder.id} status changed to ${pendingStatus}`,
-        duration: 3000,
-      });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        toast({
+          title: "Order Updated",
+          description: `Order #${selectedOrder.id} status changed to ${pendingStatus}`,
+          duration: 3000,
+        });
+      } else {
+        throw new Error(result.error); // Throw error to be caught in the catch block
+      }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update order status",
-        variant: "destructive",
-      });
+      if (error instanceof Error) {
+        toast({
+          title: "Error",
+          description: "Failed to update order status",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsUpdating(false);
       setShowDialog(false);

@@ -48,6 +48,7 @@ export async function updateOrderStatus(
   orderId: string,
   newStatus: OrderStatus
 ) {
+  console.log(orderId, newStatus);
   try {
     const updatedOrder = await db.order.update({
       where: { id: orderId },
@@ -57,7 +58,7 @@ export async function updateOrderStatus(
     });
     return { success: true, data: updatedOrder };
   } catch (error) {
-    console.error("Error updating order status:", error);
+    console.log("Error updating order status:", error);
     return { success: false, error: "Failed to update order status" };
   }
 }

@@ -14,6 +14,7 @@ import Link from "next/link";
 const NavItems = () => {
   const { user } = useUser();
   const { signOut } = useClerk();
+  const isAdmin = user?.id == "user_2r0ZTI7eT4dAD474gYFyZ1BX3TF";
   return user?.id !== undefined ? (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center space-x-2 ">
@@ -23,11 +24,22 @@ const NavItems = () => {
       <DropdownMenuContent className="p-8 focus:outline-none">
         <DropdownMenuLabel> My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Link href={"/profile"}>Profile</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem>Billing</DropdownMenuItem>
-        <DropdownMenuItem>Team</DropdownMenuItem>
+        {isAdmin ? (
+          <DropdownMenuItem>
+            <Link href={"/admin"}>Dashboard</Link>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem>
+            <Link href={"/profile"}>Profile</Link>
+          </DropdownMenuItem>
+        )}
+        {isAdmin ?? (
+          <>
+            <DropdownMenuItem>
+              <Link href={"/admin/product/create"}>Create Product</Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuItem>
           <Button onClick={() => signOut({ redirectUrl: "/" })}>SignOut</Button>
         </DropdownMenuItem>

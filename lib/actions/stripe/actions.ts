@@ -85,7 +85,7 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
 
     // Create Stripe checkout session
     const stripeSession = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "paypal", "amazon_pay"],
       line_items: cart.cartItems.map((item) => ({
         price_data: {
           currency: "usd",
@@ -102,8 +102,12 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
         cartId: cart.id,
         userId: userId,
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
+      // Request shipping address
+      shipping_address_collection: {
+        allowed_countries: ["US", "CA"], // Replace with your allowed countries
+      },
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
     });
 
     if (stripeSession.url) {
