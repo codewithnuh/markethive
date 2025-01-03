@@ -4,7 +4,7 @@ import { WebhookEvent } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import {
   addUser,
-  deleteUser,
+  deleteUserData,
   updateUserFromWebhook,
 } from "@/lib/actions/user/actions";
 import { z } from "zod";
@@ -191,7 +191,7 @@ export async function POST(req: Request) {
       const { id } = evt.data;
       try {
         // Delete user
-        const deletedUser = await deleteUser(id as string);
+        const deletedUser = await deleteUserData(id as string);
         // Return success response with user data
         return NextResponse.json(
           {

@@ -5,20 +5,34 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { productSchema, ProductFormData } from "./schema";
-import { NameField } from "./name-field";
-import { DescriptionField } from "./description-field";
-import { AttributesField } from "./attributes-field";
-import { CategoryField } from "./category-field";
-import { PriceField } from "./price-field";
-import { StockField } from "./stock-field";
+
 import { UploadButton } from "@/lib/uploadthing";
 import { useToast } from "@/hooks/use-toast";
-import { addProduct } from "@/lib/actions/product/actions";
+import { updateProduct } from "@/lib/actions/product/actions";
 import { Loader2 } from "lucide-react";
+import { DescriptionField } from "./product-creation/description-field";
+import { AttributesField } from "./product-creation/attributes-field";
+import { CategoryField } from "./product-creation/category-field";
+import { NameField } from "./product-creation/name-field";
+import { PriceField } from "./product-creation/price-field";
+import { ProductFormData, productSchema } from "./product-creation/schema";
+import { StockField } from "./product-creation/stock-field";
+
 interface SubmitButtonProps {
   text: string;
   isLoading: boolean;
+}
+
+interface UpdateProductFormProps {
+  product: Partial<{
+    id: string;
+    name: string;
+    description: string;
+    images: string[];
+    price: number;
+    stock: number;
+    attributes: { key: string; value: string }[];
+  }>;
 }
 
 function SubmitButton({ text, isLoading }: SubmitButtonProps) {
@@ -27,7 +41,7 @@ function SubmitButton({ text, isLoading }: SubmitButtonProps) {
       {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Creating Product...
+          Updating Product...
         </>
       ) : (
         text
@@ -36,25 +50,23 @@ function SubmitButton({ text, isLoading }: SubmitButtonProps) {
   );
 }
 
-export default function ProductCreationForm({
-  type,
-}: {
-  type: "Create" | "Update";
-}) {
+export default function UpdateProductForm({ product }: UpdateProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [productPictures, setProductPictures] = useState<string[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [attributes, setAttributes] = useState<
     { key: string; value: string }[]
-  >([]);
+  >(product.attributes || []);
+
   const defaultValues = {
-    name: "",
-    description: "",
-    stock: 0,
-    price: 0,
-    attributes: [],
+    name: product.name,
+    description: product.description,
+    stock: product.stock,
+    price: product.price,
+    attributes: product.attributes,
   };
+
   const {
     register,
     handleSubmit,
@@ -68,23 +80,22 @@ export default function ProductCreationForm({
   });
 
   const onSubmit = async (data: ProductFormData) => {
-    if (productPictures.length < 3) {
-      setFileError("Please upload at least 3 images");
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Please upload at least 3 images",
-      });
-      return;
-    }
-
     setIsLoading(true);
 
-    // Construct payload to match Prisma schema
+    if (productPictures.length !== 3) {
+      setFileError(
+        "Please upload exactly 3 new images before updating the product."
+      );
+      setIsLoading(false);
+      return;
+    }
+    const imagesToUse = productPictures;
+
     const payload = {
+      id: product.id,
       name: data.name,
       description: data.description,
-      images: productPictures,
+      images: imagesToUse,
       price: Number(data.price),
       stock: Number(data.stock),
       category: data.category,
@@ -92,39 +103,26 @@ export default function ProductCreationForm({
     };
 
     try {
-      let result;
-      if (type === "Create") {
-        result = await addProduct(JSON.parse(JSON.stringify(payload)));
-      }
+      const result = await updateProduct(JSON.parse(JSON.stringify(payload)));
 
-      if (result!.success) {
-        // Reset form state
-        setValue("name", "");
-        setValue("description", "");
-        setValue("stock", 0);
-        setValue("price", 0);
-        setValue("attributes", []);
-        setProductPictures([]);
-        setAttributes([]);
-        setFileError(null);
-
+      if (result.success) {
         toast({
           variant: "default",
-          title: "Product Created",
-          description: "Your product has been created successfully.",
+          title: "Product Updated",
+          description: "Your product has been updated successfully.",
         });
       } else {
         toast({
           variant: "destructive",
-          title: "Product Creation Failed",
-          description: result!.error,
+          title: "Product Update Failed",
+          description: result.error,
         });
       }
     } catch (error) {
-      console.error("Error in addProduct:", error);
+      console.error("Error in updateProduct:", error);
       toast({
         variant: "destructive",
-        title: "Product Creation Error",
+        title: "Product Update Error",
         description: "An unexpected error occurred.",
       });
     } finally {
@@ -154,19 +152,19 @@ export default function ProductCreationForm({
               className="ut-button:bg-secondary ut-button:w-full"
               endpoint="imageUploader"
               onClientUploadComplete={(files) => {
-                if (files.length > 0) {
+                if (files.length === 3) {
                   const uploadedUrls = files.map((file) => file.url);
-                  setProductPictures((prev) => [...prev, ...uploadedUrls]);
-
-                  if ([...productPictures, ...uploadedUrls].length >= 3) {
-                    setFileError(null);
-                  }
+                  setProductPictures(uploadedUrls);
+                  setFileError(null);
 
                   toast({
                     variant: "default",
                     title: "Images Uploaded",
-                    description: "Your images have been uploaded successfully.",
+                    description:
+                      "Your 3 new images have been uploaded successfully.",
                   });
+                } else {
+                  setFileError("Please upload exactly 3 images.");
                 }
               }}
               onUploadError={(err) => {
@@ -181,9 +179,9 @@ export default function ProductCreationForm({
             {fileError && (
               <p className="text-sm text-red-500 mt-1">{fileError}</p>
             )}
-            {productPictures.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {productPictures.length} image(s) uploaded. Minimum 3 required.
+            {productPictures.length === 3 && (
+              <p className="text-sm text-green-500 mt-1">
+                3 new images uploaded successfully.
               </p>
             )}
           </div>
@@ -200,7 +198,7 @@ export default function ProductCreationForm({
         </CardContent>
       </Card>
 
-      <SubmitButton text="Create Product" isLoading={isLoading} />
+      <SubmitButton text="Update Product" isLoading={isLoading} />
     </form>
   );
 }

@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { db } from "@/lib/database/db";
-import { revalidatePath } from "next/cache";
 
 /**
  * Product validation schema
@@ -30,7 +29,7 @@ type ProductInput = z.infer<typeof productSchema>;
 /**
  * Type definition for API response when performing product operations
  */
-type ProductResponse = {
+export type ProductResponse = {
   success: boolean;
   error?: string;
   data?: {
@@ -38,6 +37,21 @@ type ProductResponse = {
     name: string;
     price: number;
     stock: number;
+  };
+};
+export type SingleProductResponse = {
+  success: boolean;
+  error?: string;
+  data?: {
+    id: string;
+    name: string;
+    price: number;
+    stock: number;
+    description: string;
+    category?: string;
+    images: string[];
+    ratings?: number;
+    attributes: Array<{ key: string; value: string }>;
   };
 };
 
@@ -94,7 +108,7 @@ export async function addProduct(
  * Extends the base product schema to include an ID
  */
 const updateProductSchema = productSchema.extend({
-  id: z.string().uuid(),
+  id: z.string(),
 });
 
 /**
@@ -162,7 +176,9 @@ export async function updateProduct(
  * @param productId UUID of the product to retrieve
  * @returns Promise resolving to ProductResponse
  */
-export async function getProduct(productId: string): Promise<ProductResponse> {
+export async function getProduct(
+  productId: string
+): Promise<SingleProductResponse> {
   try {
     const product = await db.product.findUnique({
       where: { id: productId },
@@ -174,6 +190,7 @@ export async function getProduct(productId: string): Promise<ProductResponse> {
         price: true,
         stock: true,
         ratings: true,
+        category: true,
         attributes: true,
       },
     });
@@ -184,10 +201,30 @@ export async function getProduct(productId: string): Promise<ProductResponse> {
         error: "Product not found",
       };
     }
-
+    const transformedProduct = {
+      ...product,
+      attributes: Array.isArray(product.attributes)
+        ? product.attributes
+            .map((attribute) => {
+              if (
+                typeof attribute === "object" &&
+                attribute !== null &&
+                "key" in attribute &&
+                "value" in attribute
+              ) {
+                return {
+                  key: String(attribute.key),
+                  value: String(attribute.value),
+                };
+              }
+              return { key: "", value: "" };
+            })
+            .filter((attribute) => attribute.key !== "") // filter out empty objects
+        : [],
+    };
     return {
       success: true,
-      data: product,
+      data: transformedProduct,
     };
   } catch (error) {
     console.error("Error fetching product:", error);
@@ -207,25 +244,32 @@ export async function deleteProduct(
   productId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Check if product exists
-    const existingProduct = await db.product.findUnique({
+    // Check if the product exists
+    const product = await db.product.findUnique({
       where: { id: productId },
     });
 
-    if (!existingProduct) {
-      return {
-        success: false,
-        error: "Product not found",
-      };
+    if (!product) {
+      return { success: false, error: "Product not found" };
     }
 
-    // Delete product
-    await db.product.delete({
-      where: { id: productId },
-    });
+    // Use a transaction to delete all related data in the correct order
+    await db.$transaction(async (transaction) => {
+      // Delete cart items related to the product
+      await transaction.cartItem.deleteMany({
+        where: { productId },
+      });
 
-    // Revalidate paths
-    revalidatePath("/products");
+      // Delete order items related to the product
+      await transaction.orderItem.deleteMany({
+        where: { productId },
+      });
+
+      // Finally, delete the product itself
+      await transaction.product.delete({
+        where: { id: productId },
+      });
+    });
 
     return { success: true };
   } catch (error) {

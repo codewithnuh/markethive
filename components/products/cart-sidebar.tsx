@@ -92,8 +92,8 @@ export default function CartSidebar() {
       }
       toast({
         variant: "default",
-        title: "Checkout Completed",
-        description: "Checkout completed",
+        title: "Redirecting",
+        description: "Redirecting to checkout page",
       });
     } catch (error) {
       toast({
