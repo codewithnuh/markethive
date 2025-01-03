@@ -44,6 +44,7 @@ export interface Product {
   stock: number;
   ratings?: number;
   category: string;
+  discountedPrice?: number;
   attributes: Array<{ key: string; value: string }>;
 }
 

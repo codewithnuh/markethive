@@ -16,40 +16,30 @@ import { addToCart } from "@/lib/actions/product/cart/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
-// const product = {
-//   name: "Ergonomic Desk Chair",
-//   description:
-//     "Experience ultimate comfort with our ergonomic desk chair. Designed to support your body during long work hours, this chair features adjustable lumbar support, breathable mesh back, and customizable armrests.",
-//   price: 299.99,
-//   images: [
-//     "/placeholder.svg?height=400&width=400",
-//     "/placeholder.svg?height=400&width=400",
-//     "/placeholder.svg?height=400&width=400",
-//   ],
-//   attributes: [
-//     { name: "Material", value: "Mesh and High-grade Plastic" },
-//     { name: "Color", value: "Black" },
-//     { name: "Weight Capacity", value: "300 lbs" },
-//     { name: "Adjustable Height", value: "Yes" },
-//   ],
-//   id: "23", // Add a product ID for demonstration
-// };
-
 export type Product = {
   id: string;
   description: string;
   name: string;
   images: string[];
-  price: number;
+  price: number; // Original price
+  discountedPrice?: number; // Discounted price
   stock: number;
   ratings: number;
-  attributes?: Array<{ key: string; value: string }>;
+  attributes?: Array<{ name: string; value: string }>;
 };
 
 export default function ProductDetails({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Calculate discount percentage
+  const discountPercentage = product.discountedPrice
+    ? Math.round(
+        ((product.price - product.discountedPrice) / product.price) * 100
+      )
+    : 0;
+
   const handleAddToCart = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -59,24 +49,25 @@ export default function ProductDetails({ product }: { product: Product }) {
         quantity,
       });
 
+      const timestamp = new Date().toLocaleString();
+
       if (response.success) {
-        console.log("Item added to cart:", response.data);
         toast({
           title: "Product added",
-          description: "Friday, February 10, 2023 at 5:57 PM",
+          description: `Added on ${timestamp}`,
         });
-        // Optionally, show a success message or update UI
       } else {
-        console.error("Failed to add item to cart:", response.error);
         toast({
           title: "Product not added",
-          description: "Friday, February 10, 2023 at 5:57 PM",
+          description: `Failed on ${timestamp}`,
         });
-        // Optionally, show an error message
       }
     } catch (error) {
       console.error("Error adding item to cart:", error);
-      // Optionally, show an error message
+      toast({
+        title: "Error",
+        description: "Something went wrong while adding to cart.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -97,6 +88,10 @@ export default function ProductDetails({ product }: { product: Product }) {
                       width={400}
                       height={400}
                       className="rounded-md object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "/placeholder.svg?height=400&width=400";
+                      }}
                     />
                   </CardContent>
                 </Card>
@@ -104,8 +99,8 @@ export default function ProductDetails({ product }: { product: Product }) {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
+        <CarouselPrevious aria-label="Previous slide" />
+        <CarouselNext aria-label="Next slide" />
       </Carousel>
 
       <div className="space-y-6">
@@ -115,9 +110,9 @@ export default function ProductDetails({ product }: { product: Product }) {
           <h2 className="text-xl font-semibold">Attributes</h2>
           <div className="flex space-x-2 flex-wrap">
             {product?.attributes &&
-              product.attributes.map((attr) => (
-                <div key={attr.key} className="flex  items-center space-x-2">
-                  <span className="text-sm font-medium">{attr.key}:</span>
+              product.attributes.map((attr, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <span className="text-sm font-medium">{attr.name}:</span>
                   <Badge variant="outline" className="text-xs">
                     {attr.value}
                   </Badge>
@@ -125,27 +120,47 @@ export default function ProductDetails({ product }: { product: Product }) {
               ))}
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold">
-            ${product.price.toFixed(2)}
-          </span>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-            >
-              -
-            </Button>
-            <span className="w-8 text-center">{quantity}</span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setQuantity(quantity + 1)}
-            >
-              +
-            </Button>
-          </div>
+        <div className="space-y-4">
+          {/* Price and Discount Section */}
+          {product.discountedPrice ? (
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-muted-foreground line-through text-xl">
+                  ${product.price.toFixed(2)}
+                </span>
+                <span className="text-2xl font-bold text-primary">
+                  ${product.discountedPrice.toFixed(2)}
+                </span>
+              </div>
+              <Badge variant="destructive" className="text-sm">
+                Save {discountPercentage}%!
+              </Badge>
+            </div>
+          ) : (
+            <span className="text-2xl font-bold">
+              ${product.price.toFixed(2)}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            aria-label="Decrease quantity"
+          >
+            -
+          </Button>
+          <span className="w-8 text-center">{quantity}</span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setQuantity(Math.min(quantity + 1, product.stock))}
+            aria-label="Increase quantity"
+          >
+            +
+          </Button>
         </div>
         <form onSubmit={handleAddToCart}>
           <Button className="w-full" size="lg" type="submit">
@@ -161,7 +176,11 @@ export default function ProductDetails({ product }: { product: Product }) {
         </form>
         <div className="flex items-center justify-between">
           <Badge variant="secondary">Free Shipping</Badge>
-          <Badge variant="secondary">In Stock</Badge>
+          {product.stock > 0 ? (
+            <Badge variant="secondary">In Stock</Badge>
+          ) : (
+            <Badge variant="destructive">Out of Stock</Badge>
+          )}
         </div>
       </div>
     </div>

@@ -51,6 +51,7 @@ export type SingleProductResponse = {
     category?: string;
     images: string[];
     ratings?: number;
+    discountedPrice?: number;
     attributes: Array<{ key: string; value: string }>;
   };
 };
@@ -180,6 +181,7 @@ export async function getProduct(
   productId: string
 ): Promise<SingleProductResponse> {
   try {
+    // Fetch the product by ID
     const product = await db.product.findUnique({
       where: { id: productId },
       select: {
@@ -191,7 +193,7 @@ export async function getProduct(
         stock: true,
         ratings: true,
         category: true,
-        attributes: true,
+        attributes: true, // This is of type Json in your schema
       },
     });
 
@@ -201,36 +203,75 @@ export async function getProduct(
         error: "Product not found",
       };
     }
-    const transformedProduct = {
-      ...product,
-      attributes: Array.isArray(product.attributes)
-        ? product.attributes
-            .map((attribute) => {
-              if (
-                typeof attribute === "object" &&
-                attribute !== null &&
-                "key" in attribute &&
-                "value" in attribute
-              ) {
-                return {
-                  key: String(attribute.key),
-                  value: String(attribute.value),
-                };
-              }
-              return { key: "", value: "" };
-            })
-            .filter((attribute) => attribute.key !== "") // filter out empty objects
-        : [],
-    };
+
+    // Fetch the active discount (if any)
+    const discount = await db.discount.findFirst();
+    const discountPercentage = discount?.discount || 0; // Default to 0 if no discount is found
+
+    // Calculate discounted price if a valid discount is present
+    const discountedPrice =
+      discountPercentage > 0 && discountPercentage <= 100
+        ? product.price * (1 - discountPercentage / 100)
+        : undefined;
+
+    // Transform the attributes property
+    const attributes = Array.isArray(product.attributes)
+      ? product.attributes
+          .map((attribute) => {
+            if (
+              typeof attribute === "object" &&
+              attribute !== null &&
+              "key" in attribute &&
+              "value" in attribute
+            ) {
+              return {
+                key: String(attribute.key),
+                value: String(attribute.value),
+              };
+            }
+            return { key: "", value: "" };
+          })
+          .filter((attribute) => attribute.key !== "") // Filter out empty objects
+      : [];
+
     return {
       success: true,
-      data: transformedProduct,
+      data: {
+        ...product,
+        attributes,
+        discountedPrice, // Include the discounted price if applicable
+      },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching product:", error);
+
+    // Prisma-specific error handling
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P1001") {
+        return {
+          success: false,
+          error:
+            "Unable to connect to the database. Please check your database connection settings or the database status.",
+        };
+      }
+      return {
+        success: false,
+        error: `Prisma error: ${error.message}`,
+      };
+    }
+
+    // Handle any unknown or general errors
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: `Unexpected error: ${error.message}`,
+      };
+    }
+
+    // Fallback for any other unknown errors
     return {
       success: false,
-      error: "Failed to fetch product data",
+      error: "An unknown error occurred while retrieving the product.",
     };
   }
 }
@@ -295,6 +336,7 @@ export async function getAllProducts(): Promise<{
     description: string;
     images: string[];
     price: number;
+    discountedPrice?: number;
     stock: number;
     ratings?: number;
     category: string;
@@ -318,10 +360,13 @@ export async function getAllProducts(): Promise<{
       },
     });
 
-    // Transform the attributes property to match the expected type
-    const transformedProducts = products.map((product) => ({
-      ...product,
-      attributes: Array.isArray(product.attributes)
+    // Fetch the active discount (if any)
+    const discount = await db.discount.findFirst();
+    const discountPercentage = discount?.discount || 0; // Default to 0 if no discount is found
+
+    // Transform products to include discounted price
+    const transformedProducts = products.map((product) => {
+      const attributes = Array.isArray(product.attributes)
         ? product.attributes.map((attribute) => {
             if (
               typeof attribute === "object" &&
@@ -338,8 +383,20 @@ export async function getAllProducts(): Promise<{
               `Invalid attribute format for product ID ${product.id}`
             );
           })
-        : [],
-    }));
+        : [];
+
+      // Calculate discounted price if a valid discount is present
+      const discountedPrice =
+        discountPercentage > 0 && discountPercentage <= 100
+          ? product.price * (1 - discountPercentage / 100)
+          : undefined;
+
+      return {
+        ...product,
+        attributes,
+        discountedPrice, // Add discounted price if applicable
+      };
+    });
 
     return {
       success: true,

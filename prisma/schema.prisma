@@ -98,6 +98,13 @@ model OrderItem {
   @@map("order_items")
 }
 
+model Discount {
+  id       String @id @default(cuid())
+  discount Int
+
+  @@map("discount")
+}
+
 // Enum for order status
 enum OrderStatus {
   PROCESSING

@@ -44,8 +44,8 @@ class CartError extends CheckoutError {
 }
 
 /**
- * Creates a Stripe checkout session for the user's cart items
- * @returns Promise<CheckoutOrderResponse> containing success status, error message if any, and checkout URL if successful
+ * Creates a Stripe checkout session for the user's cart items with optional discounts
+ * @returns Promise<CheckoutOrderResponse>
  */
 export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
   try {
@@ -57,7 +57,7 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
       };
     }
 
-    // Get user's cart items with product details
+    // Fetch user's cart
     const cart = await db.cart.findFirst({
       where: { userId },
       include: {
@@ -83,28 +83,39 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
       };
     }
 
+    // Fetch active discount (if any)
+    const discount = await db.discount.findFirst();
+    const discountPercentage = discount?.discount || 0;
+
     // Create Stripe checkout session
     const stripeSession = await stripe.checkout.sessions.create({
-      payment_method_types: ["card", "paypal", "amazon_pay"],
-      line_items: cart.cartItems.map((item) => ({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: item.product.name,
-            images: [item.product.images[0] || ""], // Ensure images array is safe
+      payment_method_types: ["card", "amazon_pay"],
+      line_items: cart.cartItems.map((item) => {
+        const originalPrice = item.product.price;
+        const finalPrice =
+          discountPercentage > 0 && discountPercentage <= 100
+            ? originalPrice * (1 - discountPercentage / 100)
+            : originalPrice;
+
+        return {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: item.product.name,
+              images: [item.product.images[0] || ""],
+            },
+            unit_amount: Math.round(finalPrice * 100), // Convert to cents
           },
-          unit_amount: Math.round(item.product.price * 100), // Convert to cents
-        },
-        quantity: item.quantity,
-      })),
+          quantity: item.quantity,
+        };
+      }),
       mode: "payment",
       metadata: {
         cartId: cart.id,
         userId: userId,
       },
-      // Request shipping address
       shipping_address_collection: {
-        allowed_countries: ["US", "CA"], // Replace with your allowed countries
+        allowed_countries: ["US", "CA"],
       },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
@@ -138,7 +149,7 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
 /**
  * Handles successful checkout by creating an order and clearing the cart
  * @param sessionId - The Stripe checkout session ID
- * @returns Promise<CheckoutSuccessResponse> containing success status and order ID
+ * @returns Promise<CheckoutSuccessResponse>
  * @throws CheckoutError if session metadata is missing or cart cannot be found
  */
 export async function handleCheckoutSuccess(
@@ -168,17 +179,31 @@ export async function handleCheckoutSuccess(
       throw new CartError();
     }
 
+    // Fetch active discount (if any)
+    const discount = await db.discount.findFirst();
+    const discountPercentage = discount?.discount || 0;
+
+    // Calculate total price with discount
+    const totalPrice = cart.cartItems.reduce((total, item) => {
+      const originalPrice = item.product.price;
+      const finalPrice =
+        discountPercentage > 0 && discountPercentage <= 100
+          ? originalPrice * (1 - discountPercentage / 100)
+          : originalPrice;
+      return total + finalPrice * item.quantity;
+    }, 0);
+
     // Create order
     const order = await db.order.create({
       data: {
         userId: userId,
-        totalPrice: session.amount_total ? session.amount_total / 100 : 0, // Convert back to dollars
+        totalPrice, // Final total price after discounts
         status: "PROCESSING",
         orderItems: {
           create: cart.cartItems.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
-            price: item.product.price,
+            price: item.product.price, // Store original product price
           })),
         },
       },

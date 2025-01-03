@@ -90,6 +90,7 @@ export default function CartSidebar() {
       if (result.success) {
         router.push(result.url as string);
       }
+      if (result.error) throw new Error(result.error);
       toast({
         variant: "default",
         title: "Redirecting",
