@@ -36,33 +36,6 @@ enum OrderStatus {
   Shipping = "SHIPPING",
   Shipped = "SHIPPED",
 }
-// type Order = {
-//   id: string;
-//   product: string;
-//   userName: string;
-//   status: OrderStatus;
-// };
-
-// const initialOrders: Order[] = [
-//   {
-//     id: "1",
-//     product: "Laptop",
-//     userName: "John Doe",
-//     status: OrderStatus.Processing,
-//   },
-//   {
-//     id: "2",
-//     product: "Smartphone",
-//     userName: "Jane Smith",
-//     status: OrderStatus.Shipping,
-//   },
-//   {
-//     id: "3",
-//     product: "Headphones",
-//     userName: "Bob Johnson",
-//     status: OrderStatus.Shipped,
-//   },
-// ];
 
 const getStatusColor = (status: OrderStatus) => {
   switch (status) {
@@ -75,12 +48,11 @@ const getStatusColor = (status: OrderStatus) => {
   }
 };
 
-export function OrdersList({ orders }: { orders: Order[] }) {
-  // const [orders, setOrders] = useState<Order[]>(initialOrders);
-
+export function OrdersList({ ordersData }: { ordersData: Order[] }) {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [orders, setOrders] = useState<Order[]>(ordersData);
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const { toast } = useToast();
 
@@ -97,14 +69,17 @@ export function OrdersList({ orders }: { orders: Order[] }) {
     if (!selectedOrder || !pendingStatus) return;
 
     setIsUpdating(true);
+
     try {
       const result = await updateOrderStatus(selectedOrder.id, pendingStatus);
 
       if (result.success) {
-        // Update the orders in the UI
+        // Update the order status in the UI optimistically
         setOrders(
           orders.map((order) =>
-            order.id === selectedOrder.id ? result.data : order
+            order.id === selectedOrder.id
+              ? { ...order, status: pendingStatus }
+              : order
           )
         );
 
@@ -114,10 +89,7 @@ export function OrdersList({ orders }: { orders: Order[] }) {
           duration: 3000,
         });
       } else {
-        throw new Error(result.error); // Throw error to be caught in the catch block
-      }
-    } catch (error) {
-      if (error instanceof Error) {
+        // Handle the error and potentially revert the UI changes
         toast({
           title: "Error",
           description: "Failed to update order status",

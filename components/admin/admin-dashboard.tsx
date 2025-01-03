@@ -4,6 +4,7 @@ import { OrdersList } from "./order-list";
 import { DiscountsManager } from "./discount-manager";
 import { ProductsList } from "./product-list";
 import { getAllProducts } from "@/lib/actions/product/actions";
+
 export type User = {
   role: string;
   email: string;
@@ -13,7 +14,7 @@ export type User = {
 };
 
 // Order Type
-type Order = {
+export type Order = {
   id: string;
   userId: string;
   status: string;
@@ -38,6 +39,7 @@ type Order = {
     };
   }[];
 };
+
 export async function AdminDashboard({
   users,
   orders,
@@ -61,10 +63,15 @@ export async function AdminDashboard({
           <UsersList users={users} />
         </TabsContent>
         <TabsContent value="products">
-          <ProductsList initialProducts={products.data ? products.data : []} />
+          {/* You need to check if products.data is not undefined and if its length is greater than 0. */}
+          <ProductsList
+            initialProducts={
+              products.data && products.data.length > 0 ? products.data : []
+            }
+          />
         </TabsContent>
         <TabsContent value="orders">
-          <OrdersList orders={orders} />
+          <OrdersList ordersData={orders} />
         </TabsContent>
         <TabsContent value="discounts">
           <DiscountsManager />
