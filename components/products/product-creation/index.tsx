@@ -38,10 +38,8 @@ function SubmitButton({ text, isLoading }: SubmitButtonProps) {
 
 export default function ProductCreationForm({
   type,
-  product,
 }: {
   type: "Create" | "Update";
-  product?: any;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();

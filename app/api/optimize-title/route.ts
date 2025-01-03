@@ -47,7 +47,6 @@ export async function POST(req: Request) {
 
     // Process and clean the generated text
     const cleanedText = cleanText(text);
-    console.log("Optimized title:", cleanedText);
 
     // Return successful response
     return new Response(JSON.stringify({ text: cleanedText }), {
@@ -57,7 +56,7 @@ export async function POST(req: Request) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     // Log and handle errors
-    console.error("Error generating text:", error);
+
     return new Response(
       JSON.stringify({ error: error.message || "Internal Server Error" }),
       {

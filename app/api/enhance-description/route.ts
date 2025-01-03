@@ -75,9 +75,6 @@ export async function POST(req: Request) {
       throw new Error("Generated description is too short or invalid");
     }
 
-    // Log the enhanced description for debugging
-    console.log("Enhanced description:", cleanedText);
-
     // Return successful response with enhanced text and metadata
     return new Response(
       JSON.stringify({
@@ -95,9 +92,6 @@ export async function POST(req: Request) {
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    // Log error for debugging
-    console.error("Error enhancing description:", error);
-
     // Check if the error is due to rate limiting
     const isRateLimitError = error.message
       ?.toLowerCase()
