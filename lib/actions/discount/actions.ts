@@ -1,11 +1,10 @@
-// lib/actions/discount/actions.ts
 "use server";
 
 import { db } from "@/lib/database/db";
 import { revalidatePath } from "next/cache";
 
-// Assuming your Discount type looks like this:
-interface Discount {
+export interface Discount {
+  id: string;
   discount: number;
 }
 
@@ -31,7 +30,6 @@ export async function addDiscount({
   }
 }
 
-//Updated discount
 export async function updateDiscount({
   discountId,
   discountPercentage,
@@ -45,18 +43,18 @@ export async function updateDiscount({
       data: { discount: discountPercentage },
     });
 
-    revalidatePath("/admin/dashboard");
+    revalidatePath("/admin");
     return { message: "Discount updated successfully!" };
   } catch (error) {
     console.error("Error updating discount:", error);
     return { message: "Error updating discount!" };
   }
 }
-//get discount
+
 export async function getDiscount(): Promise<Discount | null> {
   try {
     const discount = await db.discount.findFirst();
-    return discount;
+    return discount ? { id: discount.id, discount: discount.discount } : null;
   } catch (error) {
     console.error("Error fetching discount:", error);
     return null;

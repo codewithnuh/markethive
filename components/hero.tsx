@@ -10,23 +10,24 @@ export default function HeroSection() {
       <div className="container px-4 py-6 md:py-12">
         <div className="grid items-center gap-6 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col justify-center space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h2 className="text-sm font-medium tracking-wide text-muted-foreground">
-                Cutting Edge Technology
+                Your Tech. Your Future.
               </h2>
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                SALE 50% OFF
+              <h1 className="text-3xl  font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+                Upgrade Your Life with Smart Savings
               </h1>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                Because Every Moment Deserves a Great Watch
+              <p className="max-w-[600px]  text-muted-foreground md:text-xl">
+                Shop the best deals on laptops, phones, and accessories.
+                Experience innovation at unbeatable prices.
               </p>
             </div>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <Button size="lg" className="bg-primary text-primary-foreground">
-                Shop Now
+                Start Shopping
               </Button>
               <Button size="lg" variant="outline">
-                Check Collection
+                View All Products
               </Button>
             </div>
           </div>
@@ -35,7 +36,7 @@ export default function HeroSection() {
               src="/hero.png"
               width={600}
               height={600}
-              alt="Smart Watch"
+              alt="Laptops and Smartphones"
               className="aspect-square object-contain dark:brightness-90"
               priority
             />
@@ -45,6 +46,9 @@ export default function HeroSection() {
 
       {/* New Arrivals */}
       <div className="container px-4 py-8">
+        <h2 className="mb-4 text-xl font-semibold tracking-tight">
+          Discover What&apos;s New
+        </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:gap-12">
           {[1, 2].map((item) => (
             <Card key={item} className="overflow-hidden">
@@ -52,15 +56,15 @@ export default function HeroSection() {
                 <div className="grid grid-cols-2 items-center gap-4 p-6">
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium tracking-wide text-muted-foreground">
-                      NEW ARRIVAL
+                      Just Arrived
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Discover the latest in smart technology
+                      Explore the latest in cutting-edge devices.
                     </p>
                   </div>
                   <div className="relative aspect-square">
                     <Image
-                      src="/laptop.webp"
+                      src={`/product-${item}.webp`}
                       width={200}
                       height={200}
                       alt={`New Arrival ${item}`}
@@ -77,20 +81,20 @@ export default function HeroSection() {
       {/* Collections */}
       <div className="container px-4 py-8">
         <h2 className="mb-6 text-center text-2xl font-bold tracking-tight">
-          COLLECTIONS
+          Shop by Category
         </h2>
         <div className="no-scrollbar items-center justify-center flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
-              className="relative aspect-square  rounded-full w-24 flex-none snap-center md:w-32"
+              className="relative aspect-square rounded-full w-24 flex-none snap-center md:w-32"
             >
               <Image
-                src="/laptop.webp"
+                src={`/category-${i + 1}.webp`}
                 width={128}
                 height={128}
-                alt={`Watch Collection ${i + 1}`}
-                className="rounded-full shadow-md  border-ring border-black dark:border-white border-2 border-dashed object-contain dark:brightness-90"
+                alt={`Category ${i + 1}`}
+                className="rounded-full shadow-md border-ring border-black dark:border-white border-2 border-dashed object-contain dark:brightness-90"
               />
             </div>
           ))}

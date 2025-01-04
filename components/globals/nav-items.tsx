@@ -25,9 +25,14 @@ const NavItems = () => {
         <DropdownMenuLabel> My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {isAdmin ? (
-          <DropdownMenuItem>
-            <Link href={"/admin"}>Dashboard</Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem>
+              <Link href={"/admin"}>Dashboard</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={"/admin/product/create"}>Create Product</Link>
+            </DropdownMenuItem>
+          </>
         ) : (
           <DropdownMenuItem>
             <Link href={"/profile"}>Profile</Link>

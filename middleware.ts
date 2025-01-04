@@ -12,7 +12,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
     // Determine if the user is the admin
     const isAdmin = userId == process.env.AUTH_ID;
-    console.log(isAdmin);
+
     if (!userId) {
       // Public users should not access any protected routes
       if (isCustomerRoute(req) || isAdminRoute(req)) {
@@ -44,9 +44,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     }
 
     return NextResponse.next();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    console.error("Error in middleware:", error);
-
     // Redirect to an error page or sign-in if something goes wrong
     url.pathname = "/sign-in";
     return NextResponse.redirect(url);

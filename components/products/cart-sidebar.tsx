@@ -31,6 +31,10 @@ interface CartItemType {
 export default function CartSidebar() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(false); // Loader state for checkout button
+  const [discountedPercentage, setDiscountedPercentage] = useState<
+    number | undefined
+  >(0); // Initial discount percentage set to 0
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -44,6 +48,7 @@ export default function CartSidebar() {
           const result = await getCart();
           if (result.success && result.data) {
             setCartItems(result.data);
+            setDiscountedPercentage(result.discountPercentage || 0);
           } else {
             toast({
               variant: "destructive",
@@ -65,7 +70,7 @@ export default function CartSidebar() {
 
       fetchCartItems();
     }
-  }, [isOpen, toast]); // Only re-run when sheet opens or toast changes
+  }, [isOpen, toast]);
 
   const updateQuantity = (id: string, newQuantity: number) => {
     setCartItems((items) =>
@@ -84,13 +89,19 @@ export default function CartSidebar() {
     0
   );
 
+  const discountedPrice = discountedPercentage
+    ? totalPrice - totalPrice * (discountedPercentage / 100)
+    : totalPrice;
+
   const handleCheckout = async () => {
     try {
+      setIsCheckingOut(true); // Start loader animation
       const result = await createCheckoutSession();
       if (result.success) {
         router.push(result.url as string);
+      } else {
+        throw new Error(result.error || "Checkout failed");
       }
-      if (result.error) throw new Error(result.error);
       toast({
         variant: "default",
         title: "Redirecting",
@@ -102,6 +113,8 @@ export default function CartSidebar() {
         title: "Checkout Error",
         description: error instanceof Error ? error.message : "Checkout failed",
       });
+    } finally {
+      setIsCheckingOut(false); // Stop loader animation
     }
   };
 
@@ -146,21 +159,35 @@ export default function CartSidebar() {
           )}
         </ScrollArea>
         <div className="border-t pt-4 mt-4">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-2">
             <span className="text-lg font-semibold">Total:</span>
             <span className="text-lg font-semibold">
               ${totalPrice.toFixed(2)}
             </span>
           </div>
-          <form action={handleCheckout}>
-            <Button
-              className="w-full"
-              type="submit"
-              disabled={isLoading || cartItems.length === 0}
-            >
-              Checkout
-            </Button>
-          </form>
+          {discountedPercentage ? (
+            <div className="flex justify-between items-center mb-4 text-green-600">
+              <span className="text-sm font-medium">Discounted Total:</span>
+              <span className="text-lg font-semibold">
+                ${discountedPrice.toFixed(2)}
+              </span>
+            </div>
+          ) : null}
+          <Button
+            className="w-full"
+            type="button"
+            disabled={isLoading || cartItems.length === 0 || isCheckingOut}
+            onClick={handleCheckout}
+          >
+            {isCheckingOut ? (
+              <>
+                <Loader2 className="animate-spin mr-2" />
+                Processing...
+              </>
+            ) : (
+              "Checkout"
+            )}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

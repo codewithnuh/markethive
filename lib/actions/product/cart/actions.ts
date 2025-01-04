@@ -170,6 +170,7 @@ type GetCartResponse = {
       images: string[];
     };
   }>;
+  discountPercentage?: number;
 };
 
 /**
@@ -217,10 +218,13 @@ export async function getCart(): Promise<GetCartResponse> {
         },
       },
     });
+    const discount = await db.discount.findFirst();
+    const discountPercentage = discount?.discount || 0;
 
     return {
       success: true,
       data: cartItems,
+      discountPercentage,
     };
   } catch (error) {
     console.error("Error fetching cart:", error);
