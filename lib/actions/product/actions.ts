@@ -323,12 +323,97 @@ export async function deleteProduct(
 }
 
 import { Prisma } from "@prisma/client";
+import { Product } from "@/components/products/product-details";
 
 /**
  * Retrieves all products from the database
  * @returns Promise resolving to a list of products or an error response
  */
-export async function getAllProducts(): Promise<{
+
+export async function getRelatedProducts(category: string): Promise<{
+  success: boolean;
+  data?: Array<{
+    id: string;
+    name: string;
+    images: string[];
+    price: number;
+    category: string;
+    discountedPrice?: number;
+  }>;
+  error?: string;
+}> {
+  try {
+    // Fetch all products from the database
+    const products = await db.product.findMany({
+      where: {
+        category,
+      },
+      select: {
+        id: true,
+        name: true,
+        images: true,
+        price: true,
+        category: true,
+      },
+    });
+
+    // Fetch the active discount (if any)
+    const discount = await db.discount.findFirst();
+    const discountPercentage = discount?.discount || 0; // Default to 0 if no discount is found
+
+    // Transform products to include discounted price
+    const transformedProducts = products.map((product) => {
+      // Calculate discounted price if a valid discount is present
+      const discountedPrice =
+        discountPercentage > 0 && discountPercentage <= 100
+          ? product.price * (1 - discountPercentage / 100)
+          : undefined;
+
+      return {
+        ...product,
+        discountedPrice, // Add discounted price if applicable
+      };
+    });
+
+    return {
+      success: true,
+      data: transformedProducts,
+    };
+  } catch (error: unknown) {
+    console.error("Error fetching products:", error);
+
+    // Prisma-specific error handling
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P1001") {
+        return {
+          success: false,
+          error:
+            "Unable to connect to the database. Please check your database connection settings or the database status.",
+        };
+      }
+      return {
+        success: false,
+        error: `Prisma error: ${error.message}`,
+      };
+    }
+
+    // Handle any unknown or general errors
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: `Unexpected error: ${error.message}`,
+      };
+    }
+
+    // Fallback for any other unknown errors
+    return {
+      success: false,
+      error: "An unknown error occurred while retrieving products.",
+    };
+  }
+}
+
+export async function getNewProducts(): Promise<{
   success: boolean;
   data?: Array<{
     id: string;
@@ -345,8 +430,10 @@ export async function getAllProducts(): Promise<{
   error?: string;
 }> {
   try {
-    // Fetch all products from the database
+    // Fetch the 10 newest products from the database, ordered by creation date descending
     const products = await db.product.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 10, // Limit to 10 products
       select: {
         id: true,
         name: true,
@@ -432,6 +519,176 @@ export async function getAllProducts(): Promise<{
     return {
       success: false,
       error: "An unknown error occurred while retrieving products.",
+    };
+  }
+}
+
+// Define interfaces for better type safety
+interface ProductAttribute {
+  key: string;
+  value: string;
+}
+
+export interface TransformedProduct extends Omit<Product, "attributes"> {
+  attributes: ProductAttribute[];
+  discountedPrice?: number;
+}
+
+interface PaginationParams {
+  query?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: "price-asc" | "price-desc" | "name" | "id";
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedResponse {
+  success: boolean;
+  data?: {
+    products: TransformedProduct[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+    };
+  };
+  error?: string;
+}
+
+export async function getAllProducts(
+  params: PaginationParams
+): Promise<PaginatedResponse> {
+  try {
+    const {
+      query = "",
+      minPrice,
+      maxPrice,
+      sortBy = "id",
+      page = 1,
+      pageSize = 10,
+    } = params;
+
+    const validPage = Math.max(1, page);
+    const validPageSize = Math.max(1, Math.min(pageSize, 100));
+
+    // Create a type-safe where clause
+    const where: Prisma.ProductWhereInput = {
+      ...(query && {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { description: { contains: query, mode: "insensitive" } },
+        ],
+      }),
+      ...(minPrice !== undefined && { price: { gte: minPrice } }),
+      ...(maxPrice !== undefined && {
+        price: {
+          ...((minPrice !== undefined && { gte: minPrice }) || {}),
+          lte: maxPrice,
+        },
+      }),
+    };
+
+    // Type-safe orderBy
+    const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
+      switch (sortBy) {
+        case "price-asc":
+          return { price: "asc" };
+        case "price-desc":
+          return { price: "desc" };
+        case "name":
+          return { name: "asc" };
+        default:
+          return { id: "asc" };
+      }
+    })();
+
+    const skip = (validPage - 1) * validPageSize;
+
+    // Parallel Promise execution for better performance
+    const [totalCount, products, discount] = await Promise.all([
+      db.product.count({ where }),
+      db.product.findMany({
+        where,
+        orderBy,
+        skip,
+        take: validPageSize,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          images: true,
+          price: true,
+          stock: true,
+          ratings: true,
+          category: true,
+          attributes: true,
+        },
+      }),
+      db.discount.findFirst(),
+    ]);
+
+    const discountPercentage = discount?.discount ?? 0;
+
+    // Transform products with type safety
+    const transformedProducts: TransformedProduct[] = products.map(
+      (product) => {
+        const attributes = (
+          product.attributes as unknown as ProductAttribute[]
+        ).map(
+          (attribute): ProductAttribute => ({
+            key: String(attribute.key),
+            value: String(attribute.value),
+          })
+        );
+
+        const discountedPrice =
+          discountPercentage > 0 && discountPercentage <= 100
+            ? parseFloat(
+                (product.price * (1 - discountPercentage / 100)).toFixed(2)
+              )
+            : undefined;
+
+        return {
+          ...product,
+          attributes,
+          discountedPrice,
+        };
+      }
+    );
+
+    const totalPages = Math.ceil(totalCount / validPageSize);
+
+    return {
+      success: true,
+      data: {
+        products: transformedProducts,
+        pagination: {
+          currentPage: validPage,
+          totalPages,
+          totalItems: totalCount,
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return {
+        success: false,
+        error:
+          error.code === "P1001"
+            ? "Unable to connect to the database. Please check your database connection settings or the database status."
+            : `Database error: ${error.message}`,
+      };
+    }
+
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? `Unexpected error: ${error.message}`
+          : "An unknown error occurred while retrieving products.",
     };
   }
 }

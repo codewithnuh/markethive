@@ -10,28 +10,14 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import ProductCard from "./product-card";
-import { Card, CardContent } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 
-const ProductCardSkeleton = () => {
+export const ProductCardSkeleton = () => {
   return (
-    <div className="w-full md:w-1/2 lg:w-1/4 px-2 md:px-4 mb-4">
-      <Card className="border-0 shadow-xl p-4">
-        <CardContent className="p-0">
-          <div className="relative">
-            <Skeleton className="absolute left-2 top-2 h-6 w-16 rounded-full" />
-            <Skeleton className="mx-auto aspect-square h-[300px] w-full rounded-lg" />
-          </div>
-          <div className="mt-4 space-y-2 text-center">
-            <Skeleton className="mx-auto h-4 w-24" />
-            <Skeleton className="mx-auto h-6 w-40" />
-            <div className="flex items-center justify-center gap-2">
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="w-52 h-52 p-5 flex flex-col space-y-3">
+      <Skeleton className="py-14" />
+      <Skeleton className="py-4" />
+      <Skeleton className="py-2" />
     </div>
   );
 };

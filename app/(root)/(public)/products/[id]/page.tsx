@@ -22,7 +22,7 @@ export default async function ProductPage({
   return (
     <div className="container mx-auto px-4 py-8">
       <ProductDetails product={product as unknown as Product} />
-      <RelatedProducts />
+      <RelatedProducts category={product.category ? product.category : ""} />
     </div>
   );
 }

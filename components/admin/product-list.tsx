@@ -21,31 +21,35 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { deleteProduct } from "@/lib/actions/product/actions";
+import {
+  deleteProduct,
+  PaginatedResponse,
+  TransformedProduct,
+} from "@/lib/actions/product/actions";
 import Link from "next/link";
-
-type Product = {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  description: string;
-  category: string;
-  attributes: Array<{ key: string; value: string }>;
-};
+import PaginationComponent from "../products/pagination";
 
 export function ProductsList({
-  initialProducts,
+  allProducts,
+  page,
+  pageSize,
 }: {
-  initialProducts: Product[];
+  allProducts: PaginatedResponse;
+  page?: number;
+  pageSize?: number;
 }) {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState(
+    allProducts.data?.products && allProducts.data.products.length != 0
+      ? allProducts.data?.products
+      : []
+  );
+  const [selectedProduct, setSelectedProduct] =
+    useState<TransformedProduct | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
 
-  const handleDelete = (product: Product) => {
+  const handleDelete = (product: TransformedProduct) => {
     setSelectedProduct(product);
     setShowDeleteDialog(true);
   };
@@ -125,6 +129,11 @@ export function ProductsList({
             </TableRow>
           ))}
         </TableBody>
+        <PaginationComponent
+          pathName="admin"
+          currentPage={page || 1}
+          totalPages={pageSize || 12}
+        />
       </Table>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

@@ -4,18 +4,29 @@ import { ModeToggle } from "../theme/theme-toggler";
 import Link from "next/link";
 import NavItems from "./nav-items";
 import CartSidebar from "../products/cart-sidebar";
+import { getDiscount } from "@/lib/actions/discount/actions";
 
 const NavBar = () => {
   const [discountPercentage, setDiscountPercentage] = useState<number | null>(
     null
   );
+  const [error, setError] = useState<string | null>(null);
 
   // Simulate fetching discount percentage from the backend
   useEffect(() => {
     const fetchDiscount = async () => {
-      // Mock API response - replace with actual API call if needed
-      const mockDiscount = 20; // Example: 20% off
-      setDiscountPercentage(mockDiscount > 0 ? mockDiscount : null);
+      try {
+        const response = await getDiscount();
+        if (!response?.discount) {
+          throw new Error("Failed to fetch discount");
+        }
+        setDiscountPercentage(response.discount);
+        setError(null);
+      } catch (err) {
+        setError("Unable to load discount information");
+        setDiscountPercentage(null);
+        console.error("Error fetching discount:", err);
+      }
     };
 
     fetchDiscount();
@@ -24,10 +35,15 @@ const NavBar = () => {
   return (
     <header>
       {/* Discount Banner */}
-      {discountPercentage && (
+      {discountPercentage && !error && (
         <div className="bg-orange-900 text-white text-sm py-2 text-center">
           🎉 Hurry! Enjoy {discountPercentage}% off on all items for a limited
           time!
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-600 text-white text-sm py-2 text-center">
+          {error}
         </div>
       )}
 

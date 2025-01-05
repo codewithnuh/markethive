@@ -43,11 +43,18 @@ export type Order = {
 export async function AdminDashboard({
   users,
   orders,
+  page,
+  pageSize,
 }: {
   users: User[];
   orders: Order[];
+  page?: number;
+  pageSize?: number;
 }) {
-  const products = await getAllProducts();
+  const products = await getAllProducts({
+    pageSize: pageSize || 12,
+    page: page || 1,
+  });
 
   return (
     <div className="container mx-auto p-6">
@@ -65,9 +72,9 @@ export async function AdminDashboard({
         <TabsContent value="products">
           {/* You need to check if products.data is not undefined and if its length is greater than 0. */}
           <ProductsList
-            initialProducts={
-              products.data && products.data.length > 0 ? products.data : []
-            }
+            allProducts={products}
+            pageSize={pageSize}
+            page={page}
           />
         </TabsContent>
         <TabsContent value="orders">

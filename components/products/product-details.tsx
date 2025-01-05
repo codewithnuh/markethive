@@ -25,6 +25,7 @@ export type Product = {
   discountedPrice?: number; // Discounted price
   stock: number;
   ratings: number;
+  category?: string;
   attributes?: Array<{ name: string; value: string }>;
 };
 

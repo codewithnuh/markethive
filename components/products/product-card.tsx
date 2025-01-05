@@ -1,11 +1,20 @@
 import React from "react";
 import { Card, CardContent } from "../ui/card";
 import Link from "next/link";
-import { CarouselItem } from "../ui/carousel";
 import Image from "next/image";
-import { Product } from "./new-products";
 
-const ProductCard = ({ product }: { product: Product }) => {
+const ProductCard = ({
+  product,
+}: {
+  product: {
+    id: string;
+    name: string;
+    images: string[];
+    price: number;
+    category: string;
+    discountedPrice?: number;
+  };
+}) => {
   // Calculate the discount percentage based on original price and discounted price
   const discountPercentage =
     product.price > product.discountedPrice!
@@ -13,15 +22,15 @@ const ProductCard = ({ product }: { product: Product }) => {
       : 0;
 
   return (
-    <CarouselItem
+    <div
       key={product.id}
-      className="pl-2 md:basis-1/2 lg:basis-1/4 md:pl-1 ml-4"
+      className="pl-2 min-w-0 shrink-0 grow-0 basis-full md:basis-1/2 lg:basis-1/4 md:pl-1 ml-4"
     >
-      <Card className="border-0 shadow-xl p-2">
+      <Card className="border-0 shadow-xl p-4">
         <CardContent className="p-0">
           <div className="relative py-4">
             {discountPercentage > 0 && (
-              <div className="absolute left-2 top-2 rounded-full bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
+              <div className="absolute -left-2 -top-2 rounded-full bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
                 {Math.round(discountPercentage)}% OFF
               </div>
             )}
@@ -35,7 +44,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           </div>
           <div className="mt-4 space-y-2 text-center">
             <p className="text-sm text-muted-foreground">{product.category}</p>
-            <Link href={`/product/${product.id}`}>
+            <Link href={`/products/${product.id}`}>
               <h3 className="font-semibold">{product.name}</h3>
             </Link>
             <div className="flex items-center justify-center gap-2">
@@ -57,7 +66,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           </div>
         </CardContent>
       </Card>
-    </CarouselItem>
+    </div>
   );
 };
 
