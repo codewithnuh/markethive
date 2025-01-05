@@ -62,3 +62,41 @@ export async function updateOrderStatus(
     return { success: false, error: "Failed to update order status" };
   }
 }
+
+export async function getAllSingleUserOrders({ userId }: { userId: string }) {
+  try {
+    const orders = await db.order.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+        orderItems: {
+          include: {
+            product: {
+              select: {
+                name: true,
+                price: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return {
+      success: true,
+      data: orders,
+    };
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return {
+      success: false,
+      error: "Failed to fetch orders",
+    };
+  }
+}

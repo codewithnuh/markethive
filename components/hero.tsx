@@ -64,7 +64,7 @@ export default function HeroSection() {
                   </div>
                   <div className="relative aspect-square">
                     <Image
-                      src={`/product-${item}.webp`}
+                      src={`/placeholder.svg`}
                       width={200}
                       height={200}
                       alt={`New Arrival ${item}`}
@@ -90,7 +90,7 @@ export default function HeroSection() {
               className="relative aspect-square rounded-full w-24 flex-none snap-center md:w-32"
             >
               <Image
-                src={`/category-${i + 1}.webp`}
+                src={`/placeholder.svg`}
                 width={128}
                 height={128}
                 alt={`Category ${i + 1}`}
