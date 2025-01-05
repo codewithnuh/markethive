@@ -36,6 +36,7 @@ const NavItems = () => {
         ) : (
           <DropdownMenuItem>
             <Link href={"/profile"}>Profile</Link>
+            <Link href={"/orders"}>Orders</Link>
           </DropdownMenuItem>
         )}
         {isAdmin ?? (

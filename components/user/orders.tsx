@@ -13,6 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { getAllSingleUserOrders } from "@/lib/actions/product/orders/actions";
 import { useAuth } from "@clerk/nextjs";
 import { Order } from "../admin/admin-dashboard";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
+
+export function Loader({ className }: { className?: string }) {
+  return <Loader2 className={`h-4 w-4 animate-spin ${className}`} />;
+}
+
 enum OrderStatus {
   Processing = "PROCESSING",
   Shipping = "SHIPPING",
@@ -32,15 +41,51 @@ const getStatusColor = (status: OrderStatus) => {
 
 export function OrdersList() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { userId } = useAuth();
+
   useEffect(() => {
     const fetchOrders = async () => {
-      if (!userId) throw Error;
-      const orders = await getAllSingleUserOrders({ userId });
-      setOrders(orders.data ? orders.data : []);
+      if (!userId) {
+        setError("User ID not found");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const ordersResponse = await getAllSingleUserOrders({ userId });
+        setOrders(ordersResponse.data || []);
+      } catch (err) {
+        if (err) {
+          setError("Failed to fetch orders. Please try again later.");
+        }
+      } finally {
+        setIsLoading(false);
+      }
     };
+
     fetchOrders();
-  });
+  }, [userId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader className="h-8 w-8" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-4 p-8">
       <div className="flex items-center justify-between">
@@ -52,41 +97,51 @@ export function OrdersList() {
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Order ID</TableHead>
-            <TableHead>Product</TableHead>
-            <TableHead>User Name</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id}>
-              <TableCell className="font-medium">#{order.id}</TableCell>
-              <TableCell>{order.orderItems[0].product.name}</TableCell>
-              <TableCell>
-                {order.user.firstName + " " + order.user.lastName}
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className={getStatusColor(
-                    order.status === "PROCESSING"
-                      ? OrderStatus.Processing
-                      : order.status === OrderStatus.Shipping
-                      ? OrderStatus.Shipping
-                      : OrderStatus.Shipped
-                  )}
-                >
-                  {order.status}
-                </Badge>
-              </TableCell>
+      {orders.length === 0 ? (
+        <Alert>
+          <AlertTitle>No Orders Found</AlertTitle>
+          <AlertDescription>
+            You haven&apos;t placed any orders yet. Start shopping to see your
+            orders here!
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Order ID</TableHead>
+              <TableHead>Product</TableHead>
+              <TableHead>User Name</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {orders.map((order) => (
+              <TableRow key={order.id}>
+                <TableCell className="font-medium">#{order.id}</TableCell>
+                <TableCell>{order.orderItems[0].product.name}</TableCell>
+                <TableCell>
+                  {order.user.firstName + " " + order.user.lastName}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant="secondary"
+                    className={getStatusColor(
+                      order.status === "PROCESSING"
+                        ? OrderStatus.Processing
+                        : order.status === OrderStatus.Shipping
+                        ? OrderStatus.Shipping
+                        : OrderStatus.Shipped
+                    )}
+                  >
+                    {order.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
