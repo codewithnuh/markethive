@@ -22,11 +22,11 @@ export default async function ProductsPage(props: {
     typeof searchParams.query === "string" ? searchParams.query : undefined;
   const maxPrice =
     typeof searchParams.maxPrice === "string"
-      ? parseFloat(searchParams.maxPrice)
+      ? parseInt(searchParams.maxPrice)
       : undefined;
   const minPrice =
     typeof searchParams.minPrice === "string"
-      ? parseFloat(searchParams.minPrice)
+      ? parseInt(searchParams.minPrice)
       : undefined;
   const page =
     typeof searchParams.page === "string"
@@ -48,7 +48,6 @@ export default async function ProductsPage(props: {
     minPrice,
     maxPrice,
   });
-  console.log(allProducts);
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6 text-center">Our Products</h1>

@@ -96,7 +96,6 @@ export default function ProductCreationForm({
       if (type === "Create") {
         result = await addProduct(JSON.parse(JSON.stringify(payload)));
       }
-      console.log(JSON.parse(JSON.stringify(payload)));
       if (result!.success) {
         // Reset form state
         setValue("name", "");

@@ -83,7 +83,6 @@ export interface Product {
 // ];
 
 export default function WhatsNewSection({ products }: { products: Product[] }) {
-  console.log(products);
   return (
     <section className="w-full py-12">
       <div className="container px-4">
@@ -105,9 +104,9 @@ export default function WhatsNewSection({ products }: { products: Product[] }) {
           }}
           className="w-full"
         >
-          <div className="absolute right-0 -top-5  flex items-center  z-10">
-            <CarouselPrevious className="relative h-8 w-8" />
-            <CarouselNext className="relative h-8 w-8" />
+          <div className="absolute right-16 mb-6 -top-5  justify-center flex items-center  z-10">
+            <CarouselPrevious className=" h-8 w-8" />
+            <CarouselNext className="h-8 w-8" />
           </div>
           <CarouselContent className="-ml-2 md:-ml-4 ">
             {products.map((product) => (

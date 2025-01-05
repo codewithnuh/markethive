@@ -45,7 +45,7 @@ export function ProductFilters() {
                 Adjust filters to refine your product search.
               </SheetDescription>
             </SheetHeader>
-            <Form action="/product">
+            <Form action="/products">
               <div className="space-y-4">
                 <div>
                   <label
@@ -139,7 +139,7 @@ export function ProductFilters() {
       </div>
 
       <div className="hidden md:block">
-        <Form action="/product">
+        <Form action="/products">
           <div className="space-y-4">
             <div>
               <label

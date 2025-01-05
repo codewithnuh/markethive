@@ -3,9 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { PaginatedResponse } from "@/lib/actions/product/actions";
 import PaginationComponent from "./pagination";
+import Link from "next/link";
 
 export function ProductList({ products }: { products: PaginatedResponse }) {
-  console.log(products.data?.products);
   if (!products || !products.data?.pagination) {
     return <div>Error loading products.</div>;
   }
@@ -27,7 +27,9 @@ export function ProductList({ products }: { products: PaginatedResponse }) {
                 height={200}
                 className="w-full h-48 object-cover mb-4 rounded-md"
               />
-              <h3 className="font-semibold mb-2">{product.name}</h3>
+              <Link href={`/products/${product.id}`}>
+                <h3 className="font-semibold mb-2">{product.name}</h3>
+              </Link>
               <p className="text-muted-foreground mb-2">{product.category}</p>
               <p className="font-bold">
                 $

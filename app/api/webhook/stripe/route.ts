@@ -22,7 +22,6 @@ export async function POST(req: Request) {
     );
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.log(`Webhook Error: ${err.message}`);
     }
     return new NextResponse("Webhook Error", { status: 400 });
   }

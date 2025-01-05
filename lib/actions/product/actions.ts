@@ -69,13 +69,11 @@ export async function addProduct(
     const validatedData = productSchema.safeParse(input);
     if (!validatedData.success) {
       // Fixed: Removed console.error of valid data
-      console.log(validatedData);
       return {
         success: false,
         error: validatedData.error.errors[0]?.message || "Invalid input",
       };
     }
-    console.log(validatedData.data);
     // Create a new product
     const newProduct = await db.product.create({
       data: {
@@ -572,6 +570,10 @@ export async function getAllProducts(
     const validPage = Math.max(1, page);
     const validPageSize = Math.max(1, Math.min(pageSize, 100));
 
+    // Ensure minPrice and maxPrice are valid numbers
+    const parsedMinPrice = Number.isFinite(minPrice) ? minPrice : undefined;
+    const parsedMaxPrice = Number.isFinite(maxPrice) ? maxPrice : undefined;
+
     // Create a type-safe where clause
     const where: Prisma.ProductWhereInput = {
       ...(query && {
@@ -580,11 +582,11 @@ export async function getAllProducts(
           { description: { contains: query, mode: "insensitive" } },
         ],
       }),
-      ...(minPrice !== undefined && { price: { gte: minPrice } }),
-      ...(maxPrice !== undefined && {
+      ...(parsedMinPrice !== undefined && { price: { gte: parsedMinPrice } }),
+      ...(parsedMaxPrice !== undefined && {
         price: {
-          ...((minPrice !== undefined && { gte: minPrice }) || {}),
-          lte: maxPrice,
+          ...(parsedMinPrice !== undefined ? { gte: parsedMinPrice } : {}),
+          lte: parsedMaxPrice,
         },
       }),
     };

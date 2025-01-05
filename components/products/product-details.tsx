@@ -26,7 +26,7 @@ export type Product = {
   stock: number;
   ratings: number;
   category?: string;
-  attributes?: Array<{ name: string; value: string }>;
+  attributes?: Array<{ key: string; value: string }>;
 };
 
 export default function ProductDetails({ product }: { product: Product }) {
@@ -113,7 +113,9 @@ export default function ProductDetails({ product }: { product: Product }) {
             {product?.attributes &&
               product.attributes.map((attr, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <span className="text-sm font-medium">{attr.name}:</span>
+                  <span className="text-sm text-foreground font-medium">
+                    {attr.key}:
+                  </span>
                   <Badge variant="outline" className="text-xs">
                     {attr.value}
                   </Badge>

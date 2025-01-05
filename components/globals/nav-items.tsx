@@ -34,18 +34,16 @@ const NavItems = () => {
             </DropdownMenuItem>
           </>
         ) : (
-          <DropdownMenuItem>
-            <Link href={"/profile"}>Profile</Link>
-            <Link href={"/orders"}>Orders</Link>
-          </DropdownMenuItem>
-        )}
-        {isAdmin ?? (
           <>
             <DropdownMenuItem>
-              <Link href={"/admin/product/create"}>Create Product</Link>
+              <Link href={"/profile"}>Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={"/orders"}>Orders</Link>
             </DropdownMenuItem>
           </>
         )}
+
         <DropdownMenuItem>
           <Button onClick={() => signOut({ redirectUrl: "/" })}>SignOut</Button>
         </DropdownMenuItem>

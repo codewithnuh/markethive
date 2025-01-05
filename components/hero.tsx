@@ -23,11 +23,15 @@ export default function HeroSection() {
               </p>
             </div>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
-              <Button size="lg" className="bg-primary text-primary-foreground">
-                Start Shopping
+              <Button
+                size="lg"
+                className="bg-primary text-primary-foreground"
+                asChild
+              >
+                <Link href={"/products"}>Start Shopping</Link>
               </Button>
-              <Button size="lg" variant="outline">
-                View All Products
+              <Button size="lg" variant="outline" asChild>
+                <Link href={"/products"}>View All Products</Link>
               </Button>
             </div>
           </div>
