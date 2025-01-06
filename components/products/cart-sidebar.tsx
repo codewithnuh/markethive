@@ -15,7 +15,7 @@ import { ShoppingCart, Loader2 } from "lucide-react";
 import CartItem from "./cart-item";
 import { getCart } from "@/lib/actions/product/cart/actions";
 import { useToast } from "@/hooks/use-toast";
-import { createCheckoutSession } from "@/lib/actions/stripe/actions";
+import { CheckoutForm } from "./checkout-form";
 
 interface CartItemType {
   id: string;
@@ -31,15 +31,15 @@ interface CartItemType {
 export default function CartSidebar() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCheckingOut, setIsCheckingOut] = useState(false); // Loader state for checkout button
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [discountedPercentage, setDiscountedPercentage] = useState<
     number | undefined
-  >(0); // Initial discount percentage set to 0
+  >(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
-  // Fetch cart items only when the sheet is opened
   useEffect(() => {
     if (isOpen) {
       const fetchCartItems = async () => {
@@ -93,29 +93,13 @@ export default function CartSidebar() {
     ? totalPrice - totalPrice * (discountedPercentage / 100)
     : totalPrice;
 
-  const handleCheckout = async () => {
-    try {
-      setIsCheckingOut(true); // Start loader animation
-      const result = await createCheckoutSession();
-      if (result.success) {
-        router.push(result.url as string);
-      } else {
-        throw new Error(result.error || "Checkout failed");
-      }
-      toast({
-        variant: "default",
-        title: "Redirecting",
-        description: "Redirecting to checkout page",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Checkout Error",
-        description: error instanceof Error ? error.message : "Checkout failed",
-      });
-    } finally {
-      setIsCheckingOut(false); // Stop loader animation
-    }
+  const handleCheckout = () => {
+    setShowCheckoutForm(true);
+  };
+
+  const handleCloseCheckout = () => {
+    setShowCheckoutForm(false);
+    setIsOpen(false);
   };
 
   return (
@@ -128,68 +112,75 @@ export default function CartSidebar() {
           </span>
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Your Cart</SheetTitle>
-        </SheetHeader>
-        <ScrollArea className="flex-grow">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          ) : cartItems.length === 0 ? (
-            <div className="flex justify-center items-center h-40 text-muted-foreground">
-              Your cart is empty
-            </div>
+      <ScrollArea className="flex-grow max-h-[400px]">
+        <SheetContent className="w-full sm:max-w-lg flex flex-col">
+          <SheetHeader>
+            <SheetTitle>
+              {showCheckoutForm ? "Checkout" : "Your Cart"}
+            </SheetTitle>
+          </SheetHeader>
+          {showCheckoutForm ? (
+            <CheckoutForm onClose={handleCloseCheckout} />
           ) : (
-            cartItems.map((item) => (
-              <CartItem
-                key={item.id}
-                item={{
-                  id: item.id,
-                  name: item.product.name,
-                  price: item.product.price,
-                  quantity: item.quantity,
-                  image: item.product.images[0],
-                }}
-                updateQuantity={updateQuantity}
-                removeItem={removeItem}
-              />
-            ))
+            <>
+              {/* Wrapping the cart items in ScrollArea */}
+              {isLoading ? (
+                <div className="flex justify-center items-center h-40">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : cartItems.length === 0 ? (
+                <div className="flex justify-center items-center h-40 text-muted-foreground">
+                  Your cart is empty
+                </div>
+              ) : (
+                cartItems.map((item) => (
+                  <CartItem
+                    key={item.id}
+                    item={{
+                      id: item.id,
+                      name: item.product.name,
+                      price: item.product.price,
+                      quantity: item.quantity,
+                      image: item.product.images[0],
+                    }}
+                    updateQuantity={updateQuantity}
+                    removeItem={removeItem}
+                  />
+                ))
+              )}
+              {/* Total and Checkout Button */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-lg font-semibold">Total:</span>
+                  <span className="text-lg font-semibold">
+                    ${totalPrice.toFixed(2)}
+                  </span>
+                </div>
+                {discountedPercentage ? (
+                  <div className="flex justify-between items-center mb-4 text-green-600">
+                    <span className="text-sm font-medium">
+                      Discounted Total:
+                    </span>
+                    <span className="text-lg font-semibold">
+                      ${discountedPrice.toFixed(2)}
+                    </span>
+                  </div>
+                ) : null}
+                <Button
+                  className="w-full"
+                  type="button"
+                  disabled={
+                    isLoading || cartItems.length === 0 || isCheckingOut
+                  }
+                  onClick={handleCheckout}
+                >
+                  Proceed to Checkout
+                </Button>
+              </div>
+            </>
           )}
-        </ScrollArea>
-        <div className="border-t pt-4 mt-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-lg font-semibold">Total:</span>
-            <span className="text-lg font-semibold">
-              ${totalPrice.toFixed(2)}
-            </span>
-          </div>
-          {discountedPercentage ? (
-            <div className="flex justify-between items-center mb-4 text-green-600">
-              <span className="text-sm font-medium">Discounted Total:</span>
-              <span className="text-lg font-semibold">
-                ${discountedPrice.toFixed(2)}
-              </span>
-            </div>
-          ) : null}
-          <Button
-            className="w-full"
-            type="button"
-            disabled={isLoading || cartItems.length === 0 || isCheckingOut}
-            onClick={handleCheckout}
-          >
-            {isCheckingOut ? (
-              <>
-                <Loader2 className="animate-spin mr-2" />
-                Processing...
-              </>
-            ) : (
-              "Checkout"
-            )}
-          </Button>
-        </div>
-      </SheetContent>
+        </SheetContent>
+      </ScrollArea>
     </Sheet>
   );
 }

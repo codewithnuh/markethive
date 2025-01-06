@@ -34,54 +34,6 @@ export interface Product {
   attributes: Array<{ key: string; value: string }>;
 }
 
-// const products: Product[] = [
-//   {
-//     id: 1,
-//     name: "LENOVO AMD RYESEN",
-//     category: "Laptop",
-//     originalPrice: 100.0,
-//     discountedPrice: 52.5,
-//     discount: 35,
-//     image: "/laptop.webp",
-//   },
-//   {
-//     id: 2,
-//     name: "LENOVO AMD RYESEN",
-//     category: "Laptop",
-//     originalPrice: 100.0,
-//     discountedPrice: 52.5,
-//     discount: 35,
-//     image: "/placeholder.svg?height=300&width=300",
-//   },
-//   {
-//     id: 3,
-//     name: "LENOVO AMD RYESEN",
-//     category: "Laptop",
-//     originalPrice: 100.0,
-//     discountedPrice: 52.5,
-//     discount: 35,
-//     image: "/placeholder.svg?height=300&width=300",
-//   },
-//   {
-//     id: 4,
-//     name: "LENOVO AMD RYESEN",
-//     category: "Laptop",
-//     originalPrice: 100.0,
-//     discountedPrice: 52.5,
-//     discount: 35,
-//     image: "/placeholder.svg?height=300&width=300",
-//   },
-//   {
-//     id: 5,
-//     name: "LENOVO AMD RYESEN",
-//     category: "Laptop",
-//     originalPrice: 100.0,
-//     discountedPrice: 52.5,
-//     discount: 35,
-//     image: "/placeholder.svg?height=300&width=300",
-//   },
-// ];
-
 export default function WhatsNewSection({ products }: { products: Product[] }) {
   return (
     <section className="w-full py-12">
@@ -110,12 +62,7 @@ export default function WhatsNewSection({ products }: { products: Product[] }) {
           </div>
           <CarouselContent className="-ml-2 md:-ml-4 ">
             {products.map((product) => (
-              <React.Suspense
-                key={product.id}
-                fallback={<ProductCardSkeleton />}
-              >
-                <ProductCard product={product} />
-              </React.Suspense>
+              <ProductCard key={product.id} product={product} />
             ))}
           </CarouselContent>
         </Carousel>

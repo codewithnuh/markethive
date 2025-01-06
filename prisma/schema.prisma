@@ -70,15 +70,20 @@ model CartItem {
 }
 
 // Order model
+// Order model
 model Order {
-  id         String      @id @default(cuid())
-  userId     String
-  user       User        @relation(fields: [userId], references: [clerkId], onDelete: Cascade) // Cascade delete
-  orderItems OrderItem[] // Relation to OrderItem
-  status     OrderStatus @default(PROCESSING)
-  totalPrice Float
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id               String          @id @default(cuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [clerkId], onDelete: Cascade)
+  orderItems       OrderItem[] // Relation to OrderItem
+  paymentAddressId String? // Optional relation for address
+  paymentAddress   PaymentAddress? @relation(fields: [paymentAddressId], references: [id], onDelete: SetNull)
+  status           OrderStatus     @default(PROCESSING)
+  totalPrice       Float
+  paymentMethod    PaymentMethod // Enum for payment method
+  paymentStatus    PaymentStatus // Enum for payment status
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@map("orders")
 }
@@ -98,6 +103,21 @@ model OrderItem {
   @@map("order_items")
 }
 
+// Payment Address model
+model PaymentAddress {
+  id          String  @id @default(cuid())
+  name        String // Full name of the user
+  address     String // Address line
+  countryName String // Country
+  postalCode  String // ZIP/Postal Code
+  orders      Order[] // Relation to orders (if needed)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payment_addresses") // Table name in PostgreSQL
+}
+
 model Discount {
   id       String @id @default(cuid())
   discount Int
@@ -110,4 +130,15 @@ enum OrderStatus {
   PROCESSING
   SHIPPING
   SHIPPED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  STRIPE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
 }

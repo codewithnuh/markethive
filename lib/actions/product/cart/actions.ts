@@ -301,3 +301,21 @@ export async function removeFromCart(id: string): Promise<CartItemResponse> {
     };
   }
 }
+
+export async function getCurrentCartId(): Promise<string | null> {
+  const { userId } = await auth();
+  if (!userId) {
+    return null;
+  }
+  const cart = await db.cart.findFirst({
+    where: { userId: userId }, // Match the clerkId of the logged-in user
+    orderBy: { createdAt: "desc" }, // Get the most recent cart
+  });
+
+  if (!cart) {
+    console.error("No active cart found for the user");
+    return null; // Handle the case where no cart exists
+  }
+
+  return cart.id; // Return the cart ID
+}
