@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -11,11 +10,12 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Loader2 } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import CartItem from "./cart-item";
 import { getCart } from "@/lib/actions/product/cart/actions";
 import { useToast } from "@/hooks/use-toast";
 import { CheckoutForm } from "./checkout-form";
+import { Skeleton } from "../ui/skeleton";
 
 interface CartItemType {
   id: string;
@@ -31,14 +31,13 @@ interface CartItemType {
 export default function CartSidebar() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isCheckingOut] = useState(false);
   const [discountedPercentage, setDiscountedPercentage] = useState<
     number | undefined
   >(0);
   const [isOpen, setIsOpen] = useState(false);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const { toast } = useToast();
-  const router = useRouter();
 
   useEffect(() => {
     if (isOpen) {
@@ -125,9 +124,7 @@ export default function CartSidebar() {
             <>
               {/* Wrapping the cart items in ScrollArea */}
               {isLoading ? (
-                <div className="flex justify-center items-center h-40">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
+                <CartItemFallback />
               ) : cartItems.length === 0 ? (
                 <div className="flex justify-center items-center h-40 text-muted-foreground">
                   Your cart is empty
@@ -184,3 +181,19 @@ export default function CartSidebar() {
     </Sheet>
   );
 }
+
+export const CartItemFallback = () => (
+  <div className="flex flex-col gap-y-6">
+    {Array(5)
+      .fill(5)
+      .map((_, index) => (
+        <div key={index} className="flex gap-2">
+          <Skeleton className="h-20 w-20"></Skeleton>
+          <div className="flex flex-col space-y-6 items-center justify-center">
+            <Skeleton className="h-4 w-20"></Skeleton>
+            <Skeleton className="h-4 w-20"></Skeleton>
+          </div>
+        </div>
+      ))}
+  </div>
+);

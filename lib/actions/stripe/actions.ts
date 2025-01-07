@@ -117,7 +117,7 @@ export async function createCheckoutSession(): Promise<CheckoutOrderResponse> {
       shipping_address_collection: {
         allowed_countries: ["US", "CA", "PK"],
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/products`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
     });
 
@@ -199,6 +199,8 @@ export async function handleCheckoutSuccess(
         userId: userId,
         totalPrice, // Final total price after discounts
         status: "PROCESSING",
+        paymentMethod: "STRIPE",
+        paymentStatus: "PAID",
         orderItems: {
           create: cart.cartItems.map((item) => ({
             productId: item.productId,
@@ -241,17 +243,91 @@ export async function createOrder({
     countryName: string;
     postalCode: string;
   }; // For Cash on Delivery
-  cartId: string; // Only passed for both cases (for COD or Stripe)
-  userId?: string; // userId passed as prop for COD
+  cartId?: string; // Optional for Stripe, required for COD
+  userId?: string; // Optional for Stripe, required for COD
 }) {
   try {
+    // Initialize variables
     let totalPrice = 0;
     let discountPercentage = 0;
-    let finalUserId: string;
+    let finalUserId: string | undefined = userId; // Will be updated for Stripe
+    let finalCartId: string | undefined = cartId; // Will be updated for Stripe
+    let paymentStatus: "PENDING" | "PAID" = "PENDING";
+    let paymentAddressId: string | undefined;
 
-    // Retrieve cart
+    // Handle STRIPE payment method
+    if (paymentMethod === "STRIPE") {
+      if (!sessionId) {
+        throw new Error("Session ID is required for Stripe payments");
+      }
+
+      // Fetch Stripe session
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      if (!session || session.payment_status !== "paid") {
+        throw new Error("Stripe payment not successful");
+      }
+
+      // Retrieve cartId and userId from session metadata
+      const { cartId: metadataCartId, userId: metadataUserId } =
+        session.metadata || {};
+
+      if (!metadataCartId || !metadataUserId) {
+        throw new Error("Missing cartId or userId in Stripe session metadata");
+      }
+
+      // Use cartId and userId from session metadata
+      finalCartId = metadataCartId;
+      finalUserId = metadataUserId;
+
+      // Update payment status
+      paymentStatus = "PAID";
+
+      // Validate and save the shipping address
+      if (!session.shipping_details || !session.shipping_details.address) {
+        throw new Error("Shipping address is incomplete or missing");
+      }
+
+      const { address, name } = session.shipping_details;
+
+      const savedAddress = await db.paymentAddress.create({
+        data: {
+          name: name || "Unknown",
+          address: address?.line1 || "Unknown",
+          countryName: address?.country || "Unknown",
+          postalCode: address?.postal_code || "Unknown",
+        },
+      });
+
+      paymentAddressId = savedAddress.id;
+    }
+
+    // Handle CASH_ON_DELIVERY payment method
+    else if (paymentMethod === "CASH_ON_DELIVERY") {
+      if (!finalCartId || !paymentAddress || !finalUserId) {
+        throw new Error(
+          "Cart ID, payment address, and user ID are required for Cash on Delivery"
+        );
+      }
+
+      // Save the provided payment address
+      const savedAddress = await db.paymentAddress.create({
+        data: {
+          name: paymentAddress.name,
+          address: paymentAddress.address,
+          countryName: paymentAddress.countryName,
+          postalCode: paymentAddress.postalCode,
+        },
+      });
+
+      paymentAddressId = savedAddress.id;
+    } else {
+      throw new Error("Unsupported payment method");
+    }
+
+    // Ensure the cart exists and has items
     const cart = await db.cart.findUnique({
-      where: { id: cartId },
+      where: { id: finalCartId },
       include: {
         cartItems: {
           include: {
@@ -267,95 +343,27 @@ export async function createOrder({
 
     // Fetch active discount (if any)
     const discount = await db.discount.findFirst();
-    discountPercentage = discount?.discount || 0;
+    discountPercentage =
+      discount?.discount && discount.discount > 0 && discount.discount <= 100
+        ? discount.discount
+        : 0;
 
     // Calculate total price with discount
     totalPrice = cart.cartItems.reduce((total, item) => {
       const originalPrice = item.product.price;
-      const finalPrice =
-        discountPercentage > 0 && discountPercentage <= 100
-          ? originalPrice * (1 - discountPercentage / 100)
-          : originalPrice;
+      const finalPrice = originalPrice * (1 - discountPercentage / 100);
       return total + finalPrice * item.quantity;
     }, 0);
-
-    // Handle payment method
-    let paymentStatus: "PENDING" | "PAID" = "PENDING";
-    let paymentAddressId: string | undefined;
-
-    if (paymentMethod === "STRIPE") {
-      // For Stripe, fetch session and confirm payment
-      const session = await stripe.checkout.sessions.retrieve(sessionId!);
-
-      if (!session || session.payment_status !== "paid") {
-        throw new Error("Stripe payment not successful");
-      }
-
-      // Retrieve cartId and userId from session metadata
-      const { cartId: metadataCartId, userId: metadataUserId } =
-        session.metadata || {};
-      if (!metadataCartId || !metadataUserId) {
-        throw new Error("Missing cartId or userId in Stripe session metadata");
-      }
-
-      // Ensure that the cartId from metadata matches the one in the request
-      if (metadataCartId !== cartId) {
-        throw new Error("CartId mismatch between request and Stripe session");
-      }
-
-      // Use userId from session metadata
-      finalUserId = metadataUserId;
-      paymentStatus = "PAID";
-
-      // Check if shipping details exist and are valid
-      if (!session.shipping_details || !session.shipping_details.address) {
-        throw new Error("Shipping address is incomplete or missing");
-      }
-      const { address, name } = session.shipping_details;
-
-      // Save the shipping address
-      const savedAddress = await db.paymentAddress.create({
-        data: {
-          name: name!, // Use the "name" from shipping details
-          address: address.line1!, // Use line1 as the primary address
-          countryName: address.country!, // Map "country" from the address
-          postalCode: address.postal_code!, // Map "postal_code" from the address
-        },
-      });
-
-      paymentAddressId = savedAddress.id;
-    } else if (paymentMethod === "CASH_ON_DELIVERY") {
-      // For Cash on Delivery, save the provided address
-      if (!paymentAddress || !userId) {
-        throw new Error(
-          "Payment address and userId are required for Cash on Delivery"
-        );
-      }
-
-      // Use the provided userId and payment address
-      finalUserId = userId;
-
-      const savedAddress = await db.paymentAddress.create({
-        data: {
-          name: paymentAddress.name,
-          address: paymentAddress.address,
-          countryName: paymentAddress.countryName,
-          postalCode: paymentAddress.postalCode,
-        },
-      });
-
-      paymentAddressId = savedAddress.id;
-    }
 
     // Create the order
     const order = await db.order.create({
       data: {
-        userId: finalUserId,
+        userId: finalUserId!,
         totalPrice, // Final total price after discounts
         status: "PROCESSING",
         paymentMethod,
         paymentStatus,
-        paymentAddressId, // Link address
+        paymentAddressId, // Link to saved address
         orderItems: {
           create: cart.cartItems.map((item) => ({
             productId: item.productId,
@@ -368,7 +376,7 @@ export async function createOrder({
 
     // Clear the cart
     await db.cart.delete({
-      where: { id: cartId },
+      where: { id: finalCartId },
     });
 
     return {
@@ -376,7 +384,10 @@ export async function createOrder({
       orderId: order.id,
     };
   } catch (error) {
-    console.error(error);
-    throw new Error("Failed to create order");
+    return {
+      success: false,
+      message: "Error creating order",
+      err: error,
+    };
   }
 }

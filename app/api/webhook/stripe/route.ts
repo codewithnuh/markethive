@@ -3,7 +3,6 @@ import { stripe } from "@/lib/stripe";
 import { NextResponse } from "next/server";
 import { createOrder } from "@/lib/actions/stripe/actions";
 import Stripe from "stripe";
-import { getCurrentCartId } from "@/lib/actions/product/cart/actions";
 
 export async function POST(req: Request) {
   // You can find your endpoint's secret in your webhook settings
@@ -30,13 +29,10 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     try {
-      const cartId = await getCurrentCartId();
-      const newOrder = await createOrder({
-        cartId: cartId!,
+      await createOrder({
         sessionId: session.id,
         paymentMethod: "STRIPE",
       });
-      console.log(newOrder);
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Error handling checkout success:", error.message);

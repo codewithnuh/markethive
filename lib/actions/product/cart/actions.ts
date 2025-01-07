@@ -302,8 +302,7 @@ export async function removeFromCart(id: string): Promise<CartItemResponse> {
   }
 }
 
-export async function getCurrentCartId(): Promise<string | null> {
-  const { userId } = await auth();
+export async function getCurrentCartId(userId: string): Promise<string | null> {
   if (!userId) {
     return null;
   }

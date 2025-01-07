@@ -105,15 +105,14 @@ model OrderItem {
 
 // Payment Address model
 model PaymentAddress {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String // Full name of the user
   address     String // Address line
   countryName String // Country
   postalCode  String // ZIP/Postal Code
   orders      Order[] // Relation to orders (if needed)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("payment_addresses") // Table name in PostgreSQL
 }

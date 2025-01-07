@@ -1,4 +1,5 @@
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { Order } from "@/components/admin/order-list";
 import { getAllOrders } from "@/lib/actions/product/orders/actions";
 import { getAllUsers } from "@/lib/actions/user/actions";
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -18,7 +19,7 @@ export default async function AdminPage(props: { searchParams: SearchParams }) {
     <main>
       <AdminDashboard
         users={users.data!}
-        orders={orders.data ? orders.data : []}
+        orders={orders.data as Order[]}
         page={page}
         pageSize={pageSize}
       />

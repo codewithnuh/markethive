@@ -12,7 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getAllSingleUserOrders } from "@/lib/actions/product/orders/actions";
 import { useAuth } from "@clerk/nextjs";
-import { Order } from "../admin/admin-dashboard";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -27,7 +26,6 @@ enum OrderStatus {
   Shipping = "SHIPPING",
   Shipped = "SHIPPED",
 }
-
 const getStatusColor = (status: OrderStatus) => {
   switch (status) {
     case OrderStatus.Processing:
@@ -38,9 +36,34 @@ const getStatusColor = (status: OrderStatus) => {
       return "bg-green-500/10 text-green-500 dark:bg-green-500/20 dark:text-green-400";
   }
 };
+type SingleUserOrder = {
+  id: string;
+  userId: string;
+  status: string;
+  totalPrice: number;
+  createdAt: Date;
+  updatedAt: Date;
+  user: {
+    firstName: string;
+    lastName: string;
+  };
+  orderItems: {
+    id: string;
+    orderId: string;
+    productId: string;
+    quantity: number;
+    price: number;
+    createdAt: Date;
+    updatedAt: Date;
+    product: {
+      name: string;
+      price: number;
+    };
+  }[];
+};
 
 export function OrdersList() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<SingleUserOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userId } = useAuth();

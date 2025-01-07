@@ -1,6 +1,7 @@
 // lib/actions/order/actions.ts
 "use server";
 
+import { PaymentStatus } from "@/components/admin/order-list";
 import { db } from "@/lib/database/db";
 
 export async function getAllOrders() {
@@ -23,11 +24,25 @@ export async function getAllOrders() {
             },
           },
         },
+        paymentAddress: {
+          // Including payment address details
+          select: {
+            name: true,
+            address: true,
+            countryName: true,
+            postalCode: true,
+          },
+        },
       },
     });
+
     return {
       success: true,
-      data: orders,
+      data: orders.map((order) => ({
+        ...order,
+        paymentMethod: order.paymentMethod, // Payment method (e.g., "CASH_ON_DELIVERY", "STRIPE")
+        paymentStatus: order.paymentStatus, // Payment status (e.g., "PENDING", "PAID", "FAILED")
+      })),
     };
   } catch (error) {
     console.error("Error fetching orders:", error);
@@ -97,5 +112,22 @@ export async function getAllSingleUserOrders({ userId }: { userId: string }) {
       success: false,
       error: "Failed to fetch orders",
     };
+  }
+}
+
+export async function updatePaymentStatus(
+  orderId: string,
+  newStatus: PaymentStatus
+) {
+  try {
+    const updatedOrder = await db.order.update({
+      where: { id: orderId },
+      data: { paymentStatus: newStatus },
+    });
+
+    return { success: true, data: updatedOrder };
+  } catch (error) {
+    console.error("Failed to update payment status:", error);
+    return { success: false, error: "Failed to update payment status" };
   }
 }

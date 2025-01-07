@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-
+import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,15 +18,17 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { createCheckoutSession } from "@/lib/actions/stripe/actions";
+import {
+  createCheckoutSession,
+  createOrder,
+} from "@/lib/actions/stripe/actions";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
+import { getCurrentCartId } from "@/lib/actions/product/cart/actions";
 
 const addressSchema = z.object({
-  fullName: z.string().min(2, "Full name is required"),
   addressLine1: z.string().min(5, "Address is required"),
   city: z.string().min(2, "City is required"),
-  state: z.string().min(2, "State is required"),
   zipCode: z.string().min(5, "ZIP code is required"),
   country: z.string().min(2, "Country is required"),
 });
@@ -47,6 +49,7 @@ export const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
   );
   const { toast } = useToast();
   const router = useRouter();
+  const { userId } = useAuth();
 
   // Dynamically set validation schema based on the current step
   const getValidationSchema = () => {
@@ -62,10 +65,8 @@ export const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(getValidationSchema()),
     defaultValues: {
-      fullName: "",
       addressLine1: "",
       city: "",
-      state: "",
       zipCode: "",
       country: "",
       paymentMethod: "cash",
@@ -73,8 +74,6 @@ export const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
   });
 
   const onSubmit = async (data: CheckoutFormData) => {
-    console.log("Form Submitted", data);
-
     if (step === "payment") {
       setPaymentMethod(data.paymentMethod); // Save payment method
       setStep("address"); // Move to address step
@@ -85,24 +84,56 @@ export const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
         if (data.paymentMethod === "stripe") {
           const result = await createCheckoutSession();
           if (result.success) {
+            toast({
+              variant: "default",
+              title: "Redirecting to Stripe",
+              description: "Please complete your payment on Stripe.",
+            });
             router.push(result.url as string);
           } else {
-            throw new Error(result.error || "Checkout failed");
+            throw new Error(result.error || "Stripe checkout failed");
+          }
+        } else if (data.paymentMethod === "cash") {
+          if (!userId) {
+            throw new Error("Please sign in");
+          }
+
+          const cartId = await getCurrentCartId(userId);
+          if (!cartId) {
+            throw new Error("No cart found");
+          }
+
+          const result = await createOrder({
+            paymentMethod: "CASH_ON_DELIVERY",
+            cartId,
+            userId,
+            paymentAddress: {
+              name: data.city, // You can update this with an input field if needed
+              address: data.addressLine1,
+              countryName: data.country,
+              postalCode: data.zipCode,
+            },
+          });
+
+          if (result.success) {
+            toast({
+              variant: "default",
+              title: "Order Placed Successfully",
+              description: "Your order has been placed successfully!",
+            });
+            onClose(); // Close the checkout modal or reset the form
+          } else {
+            throw new Error("Failed to place the order");
           }
         } else {
-          toast({
-            title: "Order Placed",
-            description:
-              "Your order has been placed successfully for cash on delivery.",
-          });
-          onClose();
+          throw new Error("Invalid payment method selected");
         }
       } catch (error) {
         toast({
           variant: "destructive",
           title: "Checkout Error",
           description:
-            error instanceof Error ? error.message : "Checkout failed",
+            error instanceof Error ? error.message : "An error occurred",
         });
       }
     }
@@ -155,19 +186,6 @@ export const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
             <>
               <FormField
                 control={form.control}
-                name="fullName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="addressLine1"
                 render={({ field }) => (
                   <FormItem>
@@ -192,19 +210,7 @@ export const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                      <Input placeholder="NY" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 control={form.control}
                 name="zipCode"
@@ -245,12 +251,8 @@ export const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
               </div>
               <div>
                 <strong>Shipping Address:</strong>
-                <p>{form.getValues("fullName")}</p>
                 <p>{form.getValues("addressLine1")}</p>
-                <p>
-                  {form.getValues("city")}, {form.getValues("state")}{" "}
-                  {form.getValues("zipCode")}
-                </p>
+                <p>{form.getValues("zipCode")}</p>
                 <p>{form.getValues("country")}</p>
               </div>
             </div>

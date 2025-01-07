@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsersList } from "./user-list";
-import { OrdersList } from "./order-list";
+import { Order, OrdersList } from "./order-list";
 import { DiscountsManager } from "./discount-manager";
 import { ProductsList } from "./product-list";
 import { getAllProducts } from "@/lib/actions/product/actions";
@@ -14,31 +14,6 @@ export type User = {
 };
 
 // Order Type
-export type Order = {
-  id: string;
-  userId: string;
-  status: string;
-  totalPrice: number;
-  createdAt: Date;
-  updatedAt: Date;
-  user: {
-    firstName: string;
-    lastName: string;
-  };
-  orderItems: {
-    id: string;
-    orderId: string;
-    productId: string;
-    quantity: number;
-    price: number;
-    createdAt: Date;
-    updatedAt: Date;
-    product: {
-      name: string;
-      price: number;
-    };
-  }[];
-};
 
 export async function AdminDashboard({
   users,
