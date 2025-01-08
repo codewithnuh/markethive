@@ -11,10 +11,10 @@ import { Button } from "../ui/button";
 import { UserIcon } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import Link from "next/link";
-const NavItems = () => {
+const NavItems = ({ isAdmin }: { isAdmin: boolean | undefined }) => {
   const { user } = useUser();
   const { signOut } = useClerk();
-  const isAdmin = user?.id == "user_2r0ZTI7eT4dAD474gYFyZ1BX3TF";
+
   return user?.id !== undefined ? (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center space-x-2 ">
@@ -24,7 +24,7 @@ const NavItems = () => {
       <DropdownMenuContent className="p-8 focus:outline-none">
         <DropdownMenuLabel> My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {isAdmin ? (
+        {isAdmin && (
           <>
             <DropdownMenuItem>
               <Link href={"/admin"}>Dashboard</Link>
@@ -33,16 +33,15 @@ const NavItems = () => {
               <Link href={"/admin/product/create"}>Create Product</Link>
             </DropdownMenuItem>
           </>
-        ) : (
-          <>
-            <DropdownMenuItem>
-              <Link href={"/profile"}>Profile</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link href={"/orders"}>Orders</Link>
-            </DropdownMenuItem>
-          </>
         )}
+        <>
+          <DropdownMenuItem>
+            <Link href={"/profile"}>Profile</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Link href={"/orders"}>Orders</Link>
+          </DropdownMenuItem>
+        </>
 
         <DropdownMenuItem>
           <Button onClick={() => signOut({ redirectUrl: "/" })}>SignOut</Button>

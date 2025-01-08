@@ -6,7 +6,7 @@ import NavItems from "./nav-items";
 import CartSidebar from "../products/cart-sidebar";
 import { getDiscount } from "@/lib/actions/discount/actions";
 
-const NavBar = () => {
+const NavBar = ({ isAdmin }: { isAdmin: boolean | undefined }) => {
   const [discountPercentage, setDiscountPercentage] = useState<number | null>(
     null
   );
@@ -31,7 +31,7 @@ const NavBar = () => {
 
     fetchDiscount();
   }, []);
-
+  console.log(isAdmin);
   return (
     <header>
       {/* Discount Banner */}
@@ -57,7 +57,7 @@ const NavBar = () => {
 
         {/* Navigation and Tools */}
         <div className="flex items-center space-x-4">
-          <NavItems />
+          <NavItems isAdmin={isAdmin} />
           <ModeToggle />
           <div>
             <CartSidebar />
