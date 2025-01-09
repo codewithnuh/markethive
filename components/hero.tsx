@@ -1,9 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { isSessionExists } from "@/lib/actions/auth/actions";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function HeroSection() {
+export default async function HeroSection() {
+  const session = await isSessionExists();
+  console.log("hello");
+  console.log(session);
+
   return (
     <section className="w-full">
       {/* Main Hero */}

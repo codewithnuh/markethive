@@ -1,13 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { decrypt } from "./lib/auth/session";
 const isCustomerRoute = createRouteMatcher(["/profile", "/orders"]);
 const isAdminRoute = createRouteMatcher([
   "/admin",
   "/admin/product/create",
-  "/admin/product/update/[id]",
+  "/admin/product/update",
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
@@ -15,15 +13,13 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   try {
     const { userId } = await auth(); // Get session claims directly from auth()
-    const cookie = (await cookies()).get("session")?.value;
-    const session = await decrypt(cookie);
+
     // Determine if the user is the admin
-    const isAdmin = session?.isAdmin;
-    console.log(session?.isAdmin);
+    const isAdmin = userId == process.env.AUTH_ID;
 
     if (!userId) {
       // Public users should not access any protected routes
-      if (isCustomerRoute(req) || isAdminRoute(req)) {
+      if (isCustomerRoute(req)) {
         url.pathname = "/sign-in";
         return NextResponse.redirect(url);
       }

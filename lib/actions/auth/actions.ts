@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { db } from "@/lib/database/db";
 import { z } from "zod";
 import { createSession } from "@/lib/auth/session";
+import { verifySession } from "@/lib/dal";
 
 // Define validation schema
 const loginSchema = z.object({
@@ -152,4 +153,12 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
       errors: { email: ["Failed to register. Please try again."] },
     };
   }
+}
+
+export async function isSessionExists() {
+  const session = await verifySession();
+  if (session) return { success: true };
+  return {
+    success: false,
+  };
 }

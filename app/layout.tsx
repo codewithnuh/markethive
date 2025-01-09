@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "../styles/globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import NavBar from "@/components/globals/navbar";
 import { ClerkProvider } from "@clerk/nextjs";
 import localFont from "next/font/local";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,6 +8,7 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
 import { Footer } from "@/components/globals/footer";
+import NavbarWrapper from "@/components/globals/navbar-wrapper";
 const poppins = localFont({
   src: [
     {
@@ -55,7 +55,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <NavBar />
+            <NavbarWrapper />
             <NextSSRPlugin
               /**
                * The `extractRouterConfig` will extract **only** the route configs
