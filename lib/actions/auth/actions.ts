@@ -17,6 +17,15 @@ export async function loginUser(formData: FormData): Promise<{
   message?: string;
   errors?: { [key: string]: string[] };
 }> {
+  // Check if a session already exists
+  const existingSession = await verifySession();
+  if (existingSession) {
+    return {
+      success: false,
+      errors: { general: ["A session already exists. Please log out first."] },
+    };
+  }
+
   const rawFormData = {
     email: formData.get("email") as string | null,
     password: formData.get("password") as string | null,
@@ -33,6 +42,7 @@ export async function loginUser(formData: FormData): Promise<{
   const { email, password } = validationResult.data;
 
   try {
+    // Ensure only one admin exists in the system
     const admin = await db.admin.findUnique({ where: { email } });
     if (!admin) {
       return { success: false, errors: { email: ["User not found"] } };
@@ -164,6 +174,7 @@ export async function isSessionExists() {
     success: false,
   };
 }
+
 export async function logout() {
   await deleteSession();
 }

@@ -8,7 +8,7 @@ const isCustomerRoute = createRouteMatcher(["/profile", "/orders"]);
 const isAdminRoute = createRouteMatcher([
   "/admin",
   "/admin/product/create",
-  "/admin/product/update",
+  "/admin/product/update/:id",
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
