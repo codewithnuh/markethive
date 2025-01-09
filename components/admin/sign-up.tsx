@@ -134,7 +134,7 @@ export default function SignupForm() {
       setSubmissionState(result);
 
       if (result.success) {
-        router.push("/dashboard");
+        router.push("/admin");
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
