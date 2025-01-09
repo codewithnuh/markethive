@@ -280,17 +280,6 @@ export default function SignupForm() {
                   >
                     Contain a number
                   </li>
-                  <li
-                    className={
-                      passwordStrength.passedCriteria.some(
-                        (c) => c.message === "Contains a special character"
-                      )
-                        ? "text-green-600"
-                        : ""
-                    }
-                  >
-                    Contain a special character
-                  </li>
                 </ul>
               </div>
 

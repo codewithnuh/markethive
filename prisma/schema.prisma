@@ -124,6 +124,15 @@ model Discount {
   @@map("discount")
 }
 
+model Admin {
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String
+
+  @@map("admin")
+}
+
 // Enum for order status
 enum OrderStatus {
   PROCESSING
