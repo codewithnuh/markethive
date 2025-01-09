@@ -2,7 +2,7 @@
 import bcrypt from "bcrypt";
 import { db } from "@/lib/database/db";
 import { z } from "zod";
-import { createSession } from "@/lib/auth/session";
+import { createSession, deleteSession } from "@/lib/auth/session";
 import { verifySession } from "@/lib/dal";
 
 // Define validation schema
@@ -120,22 +120,22 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
   }
 
   try {
-    const existingUser = await db.admin.findUnique({
-      where: { email: validationResult.data.email },
-    });
-
-    if (existingUser) {
+    // Check if an admin already exists in the database
+    const existingAdmin = await db.admin.findFirst();
+    if (existingAdmin) {
       return {
         success: false,
-        errors: { email: ["This email is already registered"] },
+        errors: { email: ["Admin already exists. Registration is disabled."] },
       };
     }
 
+    // Hash the password
     const hashedPassword = await bcrypt.hash(
       validationResult.data.password,
       10
     );
 
+    // Create the admin user
     const user = await db.admin.create({
       data: {
         name: validationResult.data.name,
@@ -144,8 +144,10 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
       },
     });
 
+    // Create a session for the admin
     await createSession(user.id, true);
-    return { success: true, message: "User registered successfully!" };
+
+    return { success: true, message: "Admin registered successfully!" };
   } catch (error) {
     console.error("Registration error:", error);
     return {
@@ -161,4 +163,7 @@ export async function isSessionExists() {
   return {
     success: false,
   };
+}
+export async function logout() {
+  await deleteSession();
 }

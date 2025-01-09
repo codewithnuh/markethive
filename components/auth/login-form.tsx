@@ -88,7 +88,7 @@ export default function LoginForm() {
         <CardDescription>
           {` Don't have an account yet? `}
           <Link
-            href="/sign-up"
+            href="/admin/sign-up"
             className="text-primary hover:underline font-medium"
           >
             Sign up here

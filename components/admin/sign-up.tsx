@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 // Password strength calculation utility
 function calculatePasswordStrength(password: string) {
   // Strength criteria
@@ -33,10 +34,6 @@ function calculatePasswordStrength(password: string) {
     {
       test: (p: string) => /[0-9]/.test(p),
       message: "Contains a number",
-    },
-    {
-      test: (p: string) => /[!@#$%^&*(),.?":{}|<>]/.test(p),
-      message: "Contains a special character",
     },
   ];
 
@@ -156,11 +153,18 @@ export default function SignupForm() {
     <>
       <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto">
         <Card>
-          <CardHeader>
-            <CardTitle>Register</CardTitle>
-            <CardDescription>Create an account to get started.</CardDescription>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Sign up</CardTitle>
+            <CardDescription>
+              Already have an account?{" "}
+              <Link
+                href="/admin/sign-in"
+                className="text-primary hover:underline font-medium"
+              >
+                Sign in here
+              </Link>
+            </CardDescription>
           </CardHeader>
-
           <CardContent className="space-y-4">
             {/* Name Field */}
             <div>

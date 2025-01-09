@@ -129,12 +129,14 @@ export function ProductsList({
             </TableRow>
           ))}
         </TableBody>
+      </Table>
+      <div className="container">
         <PaginationComponent
           pathName="admin"
           currentPage={page || 1}
           totalPages={pageSize || 12}
         />
-      </Table>
+      </div>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

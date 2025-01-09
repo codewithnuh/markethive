@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface FormData {
   email: string;
@@ -91,11 +92,18 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto">
       <Card>
-        <CardHeader>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>Enter your credentials to log in.</CardDescription>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
+          <CardDescription>
+            {` Don't have an account yet? `}
+            <Link
+              href="/admin/sign-up"
+              className="text-primary hover:underline font-medium"
+            >
+              Sign up here
+            </Link>
+          </CardDescription>
         </CardHeader>
-
         <CardContent className="space-y-4">
           {/* Email Field */}
           <div>

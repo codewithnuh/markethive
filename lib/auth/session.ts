@@ -37,9 +37,7 @@ export async function decrypt(session: string | undefined = "") {
     });
     return payload as { userId: string; isAdmin: boolean; expiresAt: string };
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error: unknown) {
-    console.log("Failed to verify session");
-  }
+  } catch (error: unknown) {}
 }
 
 export async function updateSession() {

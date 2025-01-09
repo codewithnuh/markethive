@@ -1,6 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifySession } from "./lib/dal";
+
+// Define protected routes
 const isCustomerRoute = createRouteMatcher(["/profile", "/orders"]);
 const isAdminRoute = createRouteMatcher([
   "/admin",
@@ -12,46 +15,54 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   const url = req.nextUrl.clone();
 
   try {
-    const { userId } = await auth(); // Get session claims directly from auth()
+    // Extract user ID from Clerk's auth function
+    const { userId } = await auth();
 
-    // Determine if the user is the admin
-    const isAdmin = userId == process.env.AUTH_ID;
+    // Verify session (assume `verifySession` returns a boolean indicating admin privileges)
+    const isAdmin = await verifySession(); // Admin session validation
+    const isAuthenticated = !!userId || isAdmin; // Authenticated if userId exists OR admin session is valid
 
-    if (!userId) {
-      // Public users should not access any protected routes
+    // Handle public (unauthenticated) users
+    if (!isAuthenticated) {
       if (isCustomerRoute(req)) {
+        // Redirect public users trying to access user routes
         url.pathname = "/sign-in";
         return NextResponse.redirect(url);
       }
-    }
-
-    if (userId) {
-      if (isCustomerRoute(req)) {
-        // Redirect customers trying to access admin routes
-        if (!isAdmin && isAdminRoute(req)) {
-          url.pathname = "/";
-          return NextResponse.redirect(url);
-        }
-
-        return NextResponse.next();
-      }
-
       if (isAdminRoute(req)) {
-        // Restrict admin routes to only authors
-        if (!isAdmin) {
-          url.pathname = "/sign-in";
-          return NextResponse.redirect(url);
-        }
-
-        return NextResponse.next();
+        // Redirect public users trying to access admin routes
+        url.pathname = "/admin/sign-in";
+        return NextResponse.redirect(url);
       }
+      return NextResponse.next(); // Allow access to public routes
     }
 
-    return NextResponse.next();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // Handle authenticated user routes
+    if (isCustomerRoute(req)) {
+      // Allow access to customer routes for authenticated users
+      return NextResponse.next();
+    }
+
+    // Handle admin routes
+    if (isAdminRoute(req)) {
+      // Restrict admin routes to admins only
+      if (!isAdmin) {
+        url.pathname = "/admin/sign-in";
+        return NextResponse.redirect(url);
+      }
+      return NextResponse.next(); // Allow access to admin routes for admins
+    }
+
+    return NextResponse.next(); // Allow access for non-protected routes
   } catch (error) {
-    // Redirect to an error page or sign-in if something goes wrong
-    url.pathname = "/sign-in";
+    console.error("Middleware error:", error);
+
+    // Redirect to sign-in or admin sign-in on error
+    if (isAdminRoute(req)) {
+      url.pathname = "/admin/sign-in";
+    } else {
+      url.pathname = "/sign-in";
+    }
     return NextResponse.redirect(url);
   }
 });
