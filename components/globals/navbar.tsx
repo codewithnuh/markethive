@@ -4,25 +4,13 @@ import { ModeToggle } from "../theme/theme-toggler";
 import Link from "next/link";
 import CartSidebar from "../products/cart-sidebar";
 import { getDiscount } from "@/lib/actions/discount/actions";
-import { Separator } from "@/components/ui/separator";
-import { MenuIcon } from "lucide-react";
-import { Button } from "../ui/button";
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { logout } from "@/lib/actions/auth/actions";
-import { useAuth } from "@clerk/nextjs";
-import { useClerk } from "@clerk/nextjs";
+import NavItems from "./nav-items";
 const NavBar = ({ session }: { session: boolean }) => {
   const [discountPercentage, setDiscountPercentage] = useState<number | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
-  const { isSignedIn } = useAuth();
-  const { signOut } = useClerk();
+
   // Simulate fetching discount percentage from the backend
   useEffect(() => {
     const fetchDiscount = async () => {
@@ -67,68 +55,8 @@ const NavBar = ({ session }: { session: boolean }) => {
 
         {/* Navigation and Tools */}
         <div className="flex items-center space-x-4">
-          {/* Sheet trigger and content */}
-          <Sheet>
-            <SheetTrigger>
-              <MenuIcon />
-            </SheetTrigger>
-            <SheetContent side={"left"}>
-              <SheetTitle className="mt-4">ADMIN</SheetTitle>
-              <Separator />
+          <NavItems session={session} />
 
-              <ul className="flex flex-col items-start space-y-2 text-sm justify-center mt-3">
-                {session && (
-                  <>
-                    <li>
-                      <Link href={"/admin"}>Dashboard</Link>
-                    </li>
-                    <li>
-                      <Link href={"/admin/product/create"}>Create Product</Link>
-                    </li>
-                  </>
-                )}
-                <li>
-                  {session ? (
-                    <form action={logout}>
-                      <Button size={"sm"}>Logout</Button>
-                    </form>
-                  ) : (
-                    <Button asChild size={"sm"}>
-                      <Link href={"/admin/sign-in"}>SignIn</Link>
-                    </Button>
-                  )}
-                </li>
-              </ul>
-              <SheetTitle className="mt-4">User</SheetTitle>
-              <Separator />
-              <ul className="flex flex-col items-start space-y-2 text-sm justify-center mt-3">
-                {isSignedIn && (
-                  <>
-                    <li>
-                      <Link href={"/profile"}>Profile</Link>
-                    </li>
-                    <li>
-                      <Link href={"/orders"}>Orders</Link>
-                    </li>
-                  </>
-                )}
-                <li>
-                  {isSignedIn ? (
-                    <Button
-                      onClick={() => signOut({ redirectUrl: "/" })}
-                      size={"sm"}
-                    >
-                      Logout
-                    </Button>
-                  ) : (
-                    <Button asChild size={"sm"}>
-                      <Link href={"/sign-in"}>SignIn</Link>
-                    </Button>
-                  )}
-                </li>
-              </ul>
-            </SheetContent>
-          </Sheet>
           <ModeToggle />
           <div>
             <CartSidebar />

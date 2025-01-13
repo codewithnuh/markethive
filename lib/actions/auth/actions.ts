@@ -4,6 +4,7 @@ import { db } from "@/lib/database/db";
 import { z } from "zod";
 import { createSession, deleteSession } from "@/lib/auth/session";
 import { verifySession } from "@/lib/dal";
+import { redirect } from "next/navigation";
 
 // Define validation schema
 const loginSchema = z.object({
@@ -177,4 +178,5 @@ export async function isSessionExists() {
 
 export async function logout() {
   await deleteSession();
+  redirect("/");
 }
