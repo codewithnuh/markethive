@@ -4,7 +4,14 @@ import { ProductFilters } from "@/components/products/product-filter";
 import { getAllProducts } from "@/lib/actions/product/actions";
 import { ProductCardSkeleton } from "@/components/products/new-products";
 import { connection } from "next/server";
-
+import {
+  getBestSellingProducts,
+  getCustomerOrderStats,
+  getProductPerformance,
+  getRevenueByCategory,
+  getSalesTrends,
+  getTotalRevenueAndSales,
+} from "@/lib/actions/analytics/actions";
 export const experimental_ppr = true;
 
 // Update the type to reflect the async nature of searchParams
@@ -14,6 +21,28 @@ export default async function ProductsPage(props: {
   searchParams: SearchParams;
 }) {
   await connection();
+  const bestSellingProducts = (await getBestSellingProducts()).products;
+  const orderStats = (await getCustomerOrderStats()).customers;
+  const productPerformance = (await getProductPerformance()).products;
+  const revenueByCategory = (await getRevenueByCategory()).revenueByCategory;
+  const salesTrends = (await getSalesTrends()).salesTrends;
+  const totalRevenueAndSales = (await getTotalRevenueAndSales()).totalRevenue;
+  const totalRevenueAndSold = (await getTotalRevenueAndSales()).totalSold;
+  console.log(
+    JSON.stringify(
+      {
+        bestSellingProducts,
+        orderStats,
+        productPerformance,
+        revenueByCategory,
+        salesTrends,
+        totalRevenueAndSales,
+        totalRevenueAndSold,
+      },
+      null, // Replacer function (optional)
+      2 // Indentation for readability
+    )
+  );
 
   // Await searchParams to access its values
   const searchParams = await props.searchParams;

@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "order_items" ADD COLUMN     "total" DOUBLE PRECISION NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "products" ADD COLUMN     "totalRevenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "totalSold" INTEGER NOT NULL DEFAULT 0;

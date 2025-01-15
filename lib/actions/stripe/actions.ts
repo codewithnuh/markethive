@@ -233,63 +233,48 @@ export async function createOrder({
   paymentMethod,
   paymentAddress,
   cartId,
-  userId, // userId will be passed for COD
+  userId,
 }: {
-  sessionId?: string; // Only needed for Stripe
+  sessionId?: string;
   paymentMethod: "CASH_ON_DELIVERY" | "STRIPE";
   paymentAddress?: {
     name: string;
     address: string;
     countryName: string;
     postalCode: string;
-  }; // For Cash on Delivery
-  cartId?: string; // Optional for Stripe, required for COD
-  userId?: string; // Optional for Stripe, required for COD
+  };
+  cartId?: string;
+  userId?: string;
 }) {
   try {
-    // Initialize variables
     let totalPrice = 0;
     let discountPercentage = 0;
-    let finalUserId: string | undefined = userId; // Will be updated for Stripe
-    let finalCartId: string | undefined = cartId; // Will be updated for Stripe
+    let finalUserId = userId;
+    let finalCartId = cartId;
     let paymentStatus: "PENDING" | "PAID" = "PENDING";
     let paymentAddressId: string | undefined;
 
-    // Handle STRIPE payment method
+    // Previous Stripe and COD logic remains the same...
     if (paymentMethod === "STRIPE") {
-      if (!sessionId) {
+      if (!sessionId)
         throw new Error("Session ID is required for Stripe payments");
-      }
 
-      // Fetch Stripe session
       const session = await stripe.checkout.sessions.retrieve(sessionId);
-
       if (!session || session.payment_status !== "paid") {
         throw new Error("Stripe payment not successful");
       }
 
-      // Retrieve cartId and userId from session metadata
       const { cartId: metadataCartId, userId: metadataUserId } =
         session.metadata || {};
-
       if (!metadataCartId || !metadataUserId) {
         throw new Error("Missing cartId or userId in Stripe session metadata");
       }
 
-      // Use cartId and userId from session metadata
       finalCartId = metadataCartId;
       finalUserId = metadataUserId;
-
-      // Update payment status
       paymentStatus = "PAID";
 
-      // Validate and save the shipping address
-      if (!session.shipping_details || !session.shipping_details.address) {
-        throw new Error("Shipping address is incomplete or missing");
-      }
-
-      const { address, name } = session.shipping_details;
-
+      const { address, name } = session.shipping_details || {};
       const savedAddress = await db.paymentAddress.create({
         data: {
           name: name || "Unknown",
@@ -300,24 +285,15 @@ export async function createOrder({
       });
 
       paymentAddressId = savedAddress.id;
-    }
-
-    // Handle CASH_ON_DELIVERY payment method
-    else if (paymentMethod === "CASH_ON_DELIVERY") {
+    } else if (paymentMethod === "CASH_ON_DELIVERY") {
       if (!finalCartId || !paymentAddress || !finalUserId) {
         throw new Error(
           "Cart ID, payment address, and user ID are required for Cash on Delivery"
         );
       }
 
-      // Save the provided payment address
       const savedAddress = await db.paymentAddress.create({
-        data: {
-          name: paymentAddress.name,
-          address: paymentAddress.address,
-          countryName: paymentAddress.countryName,
-          postalCode: paymentAddress.postalCode,
-        },
+        data: paymentAddress,
       });
 
       paymentAddressId = savedAddress.id;
@@ -325,65 +301,102 @@ export async function createOrder({
       throw new Error("Unsupported payment method");
     }
 
-    // Ensure the cart exists and has items
-    const cart = await db.cart.findUnique({
-      where: { id: finalCartId },
-      include: {
-        cartItems: {
-          include: {
-            product: true,
+    // Wrap all database operations in a transaction
+    const result = await db.$transaction(async (tx) => {
+      // Retrieve cart and items
+      const cart = await tx.cart.findUnique({
+        where: { id: finalCartId },
+        include: {
+          cartItems: {
+            include: {
+              product: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!cart || !cart.cartItems.length) {
-      throw new Error("Cart is empty or not found");
-    }
+      if (!cart || !cart.cartItems.length) {
+        throw new Error("Cart is empty or not found");
+      }
 
-    // Fetch active discount (if any)
-    const discount = await db.discount.findFirst();
-    discountPercentage =
-      discount?.discount && discount.discount > 0 && discount.discount <= 100
-        ? discount.discount
-        : 0;
+      // Calculate total price with discount
+      const discount = await tx.discount.findFirst();
+      discountPercentage =
+        discount?.discount && discount.discount > 0 && discount.discount <= 100
+          ? discount.discount
+          : 0;
 
-    // Calculate total price with discount
-    totalPrice = cart.cartItems.reduce((total, item) => {
-      const originalPrice = item.product.price;
-      const finalPrice = originalPrice * (1 - discountPercentage / 100);
-      return total + finalPrice * item.quantity;
-    }, 0);
+      totalPrice = cart.cartItems.reduce((total, item) => {
+        const originalPrice = item.product.price;
+        const finalPrice = originalPrice * (1 - discountPercentage / 100);
+        return total + finalPrice * item.quantity;
+      }, 0);
 
-    // Create the order
-    const order = await db.order.create({
-      data: {
-        userId: finalUserId!,
-        totalPrice, // Final total price after discounts
-        status: "PROCESSING",
-        paymentMethod,
-        paymentStatus,
-        paymentAddressId, // Link to saved address
-        orderItems: {
-          create: cart.cartItems.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.product.price, // Store original product price
-          })),
+      // Create order first
+      const order = await tx.order.create({
+        data: {
+          userId: finalUserId!,
+          totalPrice,
+          status: "PROCESSING",
+          paymentMethod,
+          paymentStatus,
+          paymentAddressId,
+          orderItems: {
+            create: cart.cartItems.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.product.price,
+            })),
+          },
         },
-      },
+      });
+
+      // Update product stats within the same transaction
+      for (const item of cart.cartItems) {
+        if (!item.quantity || !item.product.price) {
+          console.error(
+            `[createOrder] Invalid quantity or price for Product ID=${item.productId}`,
+            { quantity: item.quantity, price: item.product.price }
+          );
+          continue;
+        }
+
+        const incrementQuantity = Number(item.quantity);
+        const incrementRevenue =
+          Number(item.quantity) * Number(item.product.price);
+
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            totalSold: { increment: incrementQuantity },
+            totalRevenue: { increment: incrementRevenue },
+          },
+        });
+
+        console.log(
+          `[createOrder] Updated product stats for ID=${item.productId}:`,
+          {
+            soldIncrement: incrementQuantity,
+            revenueIncrement: incrementRevenue,
+          }
+        );
+      }
+
+      // Delete cart after everything else succeeds
+      await tx.cart.delete({
+        where: { id: finalCartId },
+      });
+
+      return order;
     });
 
-    // Clear the cart
-    await db.cart.delete({
-      where: { id: finalCartId },
-    });
-
+    console.log("[createOrder] Order created successfully:", result.id);
     return {
       success: true,
-      orderId: order.id,
+      orderId: result.id,
     };
   } catch (error) {
+    console.error("[createOrder] Error creating order:", error);
     return {
       success: false,
       message: "Error creating order",

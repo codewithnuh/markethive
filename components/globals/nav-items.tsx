@@ -30,7 +30,7 @@ const NavItems = ({ session }: { session: boolean }) => {
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center space-x-2">
             <UserIcon />
-            <span>Admin Account</span>
+            <span>Account</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="p-8 focus:outline-none">
             <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
@@ -42,6 +42,9 @@ const NavItems = ({ session }: { session: boolean }) => {
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link href={"/admin/product/create"}>Create Product</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={"/admin/analytics"}>Analytics</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
