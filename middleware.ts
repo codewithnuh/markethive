@@ -8,6 +8,7 @@ const isCustomerRoute = createRouteMatcher(["/profile", "/orders"]);
 const isAdminRoute = createRouteMatcher([
   "/admin",
   "/admin/product/create",
+  "/admin/analytics",
   "/admin/product/update/:id",
 ]);
 
