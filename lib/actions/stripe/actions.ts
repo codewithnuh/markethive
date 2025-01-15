@@ -372,14 +372,6 @@ export async function createOrder({
             totalRevenue: { increment: incrementRevenue },
           },
         });
-
-        console.log(
-          `[createOrder] Updated product stats for ID=${item.productId}:`,
-          {
-            soldIncrement: incrementQuantity,
-            revenueIncrement: incrementRevenue,
-          }
-        );
       }
 
       // Delete cart after everything else succeeds
@@ -390,7 +382,6 @@ export async function createOrder({
       return order;
     });
 
-    console.log("[createOrder] Order created successfully:", result.id);
     return {
       success: true,
       orderId: result.id,

@@ -24,53 +24,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useTheme } from "next-themes";
+import { SalesData } from "@/types";
 
-const data = {
-  bestSellingProducts: [
-    { name: "Product 20", totalSold: 10, totalRevenue: 8400 },
-    { name: "Product 17", totalSold: 9, totalRevenue: 7020 },
-    { name: "MacBook M4 Chip Laptop", totalSold: 7, totalRevenue: 8400 },
-    { name: "Lenovo AMD Laptop", totalSold: 2, totalRevenue: 2880 },
-    { name: "Product 19", totalSold: 2, totalRevenue: 820 },
-  ],
-  revenueByCategory: [
-    { category: "Laptop", value: 12100 },
-    { category: "Smartphone", value: 8400 },
-    { category: "Tablet", value: 7020 },
-    { category: "Electronics", value: 0 },
-    { category: "Gaming Console", value: 0 },
-  ],
-  salesTrends: [
-    { date: "2025-01-07", sales: 2080 },
-    { date: "2025-01-08", sales: 400 },
-    { date: "2025-01-13", sales: 1220 },
-    { date: "2025-01-15", sales: 13550 },
-  ],
-  orderStats: [
-    {
-      name: "Noor -ul- Hassan",
-      totalOrders: 11,
-      totalRevenue: 16410,
-      averageOrderValue: 1491.82,
-    },
-    {
-      name: "John Doe",
-      totalOrders: 2,
-      totalRevenue: 1260,
-      averageOrderValue: 630,
-    },
-    {
-      name: "test tesss",
-      totalOrders: 1,
-      totalRevenue: 400,
-      averageOrderValue: 400,
-    },
-  ],
-  totalRevenueAndSales: 27520,
-  totalRevenueAndSold: 30,
-};
-
-export function AnalyticsDashboard() {
+export function AnalyticsDashboard({ data }: { data: SalesData }) {
   const { theme } = useTheme();
   const chartColors = {
     bar: theme === "dark" ? "#adfa1d" : "#3b82f6",
