@@ -61,6 +61,7 @@ function SubmitButton({ text, isLoading }: SubmitButtonProps) {
 
 export default function UpdateProductForm({ product }: UpdateProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [openAlertIndex, setOpenAlertIndex] = useState<number | null>(null);
   const { toast } = useToast();
   const [productPictures, setProductPictures] = useState<string[]>(
     product.images || []
@@ -168,7 +169,12 @@ export default function UpdateProductForm({ product }: UpdateProductFormProps) {
                     alt={`Product ${index + 1}`}
                     className="rounded-lg border border-border w-full h-full object-cover transition-all duration-300 group-hover:opacity-75 dark:border-gray-700"
                   />
-                  <AlertDialog>
+                  <AlertDialog
+                    open={openAlertIndex === index}
+                    onOpenChange={(isOpen) =>
+                      setOpenAlertIndex(isOpen ? index : null)
+                    }
+                  >
                     <AlertDialogTitle className="sr-only">
                       Update Product Images
                     </AlertDialogTitle>
@@ -208,6 +214,7 @@ export default function UpdateProductForm({ product }: UpdateProductFormProps) {
                             setProductPictures((prev) =>
                               prev.filter((_, i) => i !== index)
                             );
+                            setOpenAlertIndex(null);
                             toast({
                               variant: "default",
                               title: "Image Removed",
@@ -219,7 +226,12 @@ export default function UpdateProductForm({ product }: UpdateProductFormProps) {
                         >
                           Delete
                         </Button>
-                        <Button variant="outline">Cancel</Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setOpenAlertIndex(null)}
+                        >
+                          Cancel
+                        </Button>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
