@@ -137,10 +137,10 @@ const ForgotPassword = () => {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Forgot Password?</CardTitle>
-        <CardDescription>
+    <Card className="w-full max-w-md mx-auto rounded-[2rem] border-none shadow-2xl p-4">
+      <CardHeader className="text-center space-y-2">
+        <CardTitle className="text-2xl font-bold tracking-tight">Forgot password?</CardTitle>
+        <CardDescription className="text-sm">
           {resetSuccess
             ? "Password reset successful! Redirecting to sign in..."
             : !successfulCreation
@@ -153,29 +153,29 @@ const ForgotPassword = () => {
           onSubmit={
             !successfulCreation ? handleSendResetCode : handleResetPassword
           }
-          className="space-y-4"
+          className="space-y-6"
         >
           {!successfulCreation ? (
-            <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="e.g john@doe.com"
+                placeholder="name@example.com"
                 value={formState.email}
                 onChange={handleInputChange}
                 disabled={isLoading}
                 className={cn(
-                  error?.field === "email" &&
-                    "border-red-500 focus-visible:ring-red-500"
+                  "h-12 rounded-xl bg-secondary/30 border-none px-4",
+                  error?.field === "email" && "ring-2 ring-red-500"
                 )}
               />
             </div>
           ) : (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <Label htmlFor="password" title="New Password" className="text-xs font-bold uppercase tracking-widest ml-1">New Password</Label>
                 <Input
                   id="password"
                   name="password"
@@ -184,13 +184,13 @@ const ForgotPassword = () => {
                   onChange={handleInputChange}
                   disabled={isLoading || resetSuccess}
                   className={cn(
-                    error?.field === "password" &&
-                      "border-red-500 focus-visible:ring-red-500"
+                    "h-12 rounded-xl bg-secondary/30 border-none px-4",
+                    error?.field === "password" && "ring-2 ring-red-500"
                   )}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="code">Reset Code</Label>
+              <div className="space-y-1">
+                <Label htmlFor="code" title="Reset Code" className="text-xs font-bold uppercase tracking-widest ml-1">Reset Code</Label>
                 <Input
                   id="code"
                   name="code"
@@ -199,59 +199,42 @@ const ForgotPassword = () => {
                   onChange={handleInputChange}
                   disabled={isLoading || resetSuccess}
                   className={cn(
-                    error?.field === "code" &&
-                      "border-red-500 focus-visible:ring-red-500"
+                    "h-12 rounded-xl bg-secondary/30 border-none px-4",
+                    error?.field === "code" && "ring-2 ring-red-500"
                   )}
-                  placeholder="Enter the code sent to your email"
+                  placeholder="6-digit code"
                 />
               </div>
-            </>
+            </div>
           )}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-lg font-bold shadow-lg shadow-blue-600/20"
             disabled={isLoading || resetSuccess}
           >
             {resetSuccess ? (
-              <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Password Reset Successful
-              </>
+              <CheckCircle2 className="h-5 w-5" />
             ) : isLoading ? (
-              <>
-                <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                {!successfulCreation
-                  ? "Sending reset code..."
-                  : "Resetting password..."}
-              </>
+              <Loader2 className="animate-spin h-5 w-5" />
             ) : !successfulCreation ? (
-              "Send password reset code"
+              "Send code"
             ) : (
-              "Reset Password"
+              "Reset password"
             )}
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col gap-2">
+      <CardFooter className="flex flex-col gap-4">
         {error && (
-          <Alert variant="destructive" className="w-full">
-            <AlertDescription>{error.message}</AlertDescription>
-          </Alert>
-        )}
-        {secondFactor && (
-          <Alert className="w-full">
-            <AlertDescription>
-              2FA is required, but this UI does not handle that
-            </AlertDescription>
-          </Alert>
+          <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold p-3 rounded-xl text-center w-full">
+            {error.message}
+          </div>
         )}
         {resetSuccess && (
-          <Alert className="w-full bg-green-50 border-green-200 text-green-800">
-            <AlertDescription className="flex items-center">
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Password reset successful! Redirecting to /.
-            </AlertDescription>
-          </Alert>
+          <div className="bg-green-500/10 border border-green-500/20 text-green-600 text-xs font-bold p-3 rounded-xl text-center w-full flex items-center justify-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            Success! Redirecting...
+          </div>
         )}
       </CardFooter>
     </Card>

@@ -21,21 +21,22 @@ import {
 
 // Constants
 const CATEGORIES = [
-  "Electronics",
-  "Clothing",
-  "Books",
-  "Home & Garden",
+  "Laptops",
+  "Phones",
+  "Tablets",
+  "Watches",
+  "Accessories",
 ] as const;
 
 export function ProductFilters() {
   return (
     <>
-      <div className="md:hidden mb-4">
+      <div className="lg:hidden mb-8">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full h-12 rounded-full border-2">
               <SlidersHorizontal className="mr-2 h-4 w-4" />
-              Filters
+              Filters & Sort
             </Button>
           </SheetTrigger>
           <SheetContent>
@@ -138,13 +139,13 @@ export function ProductFilters() {
         </Sheet>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Form action="/products">
-          <div className="space-y-4">
+          <div className="space-y-8 sticky top-24">
             <div>
               <label
                 htmlFor="search"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3"
               >
                 Search
               </label>
@@ -152,21 +153,21 @@ export function ProductFilters() {
                 type="search"
                 name="query"
                 id="search"
-                placeholder="Search products..."
-                className="w-full"
+                placeholder="Product name..."
+                className="w-full h-12 rounded-xl bg-secondary/30 border-none"
               />
             </div>
 
             <div>
               <label
                 htmlFor="category"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3"
               >
                 Category
               </label>
               <Select name="category">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
+                <SelectTrigger className="h-12 rounded-xl bg-secondary/30 border-none">
+                  <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
@@ -180,24 +181,24 @@ export function ProductFilters() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                 Price Range
               </label>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-3">
                 <Input
                   type="number"
                   name="minPrice"
-                  className="w-20"
+                  placeholder="Min"
+                  className="h-12 rounded-xl bg-secondary/30 border-none"
                   min={0}
-                  step="0.01"
                 />
-                <span>to</span>
+                <span className="text-muted-foreground text-sm font-bold">—</span>
                 <Input
                   type="number"
                   name="maxPrice"
-                  className="w-20"
+                  placeholder="Max"
+                  className="h-12 rounded-xl bg-secondary/30 border-none"
                   min={0}
-                  step="0.01"
                 />
               </div>
             </div>
@@ -205,13 +206,13 @@ export function ProductFilters() {
             <div>
               <label
                 htmlFor="sortBy"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3"
               >
                 Sort By
               </label>
               <Select name="sortBy">
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
+                <SelectTrigger className="h-12 rounded-xl bg-secondary/30 border-none">
+                  <SelectValue placeholder="Featured" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="name">Name</SelectItem>
@@ -221,7 +222,9 @@ export function ProductFilters() {
               </Select>
             </div>
 
-            <Button type="submit">Apply Filters</Button>
+            <Button type="submit" className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 font-bold">
+              Apply Filters
+            </Button>
           </div>
         </Form>
       </div>

@@ -216,100 +216,88 @@ export function OrdersList({ ordersData }: { ordersData: Order[] }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Orders List</h2>
-        <Badge variant="outline" className="px-4 py-1">
-          Admin View
-        </Badge>
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold tracking-tight">Orders</h2>
+          <p className="text-sm text-muted-foreground">Monitor and update customer orders.</p>
+        </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Order ID</TableHead>
-            <TableHead>Product</TableHead>
-            <TableHead>User Name</TableHead>
-            <TableHead>Payment Method</TableHead>
-            <TableHead>Payment Status</TableHead>
-            <TableHead>Order Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id}>
-              <TableCell className="font-medium">#{order.id}</TableCell>
-              <TableCell>{order.orderItems[0].product.name}</TableCell>
-              <TableCell>
-                {order.user.firstName + " " + order.user.lastName}
-              </TableCell>
-              <TableCell>{order.paymentMethod}</TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className={getStatusColor(order.paymentStatus)}
-                >
-                  {order.paymentStatus}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className={getStatusColor(order.status)}
-                >
-                  {order.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Select
-                    onValueChange={(value: OrderStatus) =>
-                      handleStatusUpdate(order.id, value, "order")
-                    }
-                    defaultValue={order.status}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Order Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(OrderStatus).map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    onValueChange={(value: PaymentStatus) =>
-                      handleStatusUpdate(order.id, value, "payment")
-                    }
-                    defaultValue={order.paymentStatus}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Payment Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(PaymentStatus).map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleViewDetails(order)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
+      <div className="rounded-[1.5rem] bg-background/50 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-none hover:bg-transparent bg-secondary/30">
+              <TableHead className="font-bold uppercase tracking-widest text-[10px] py-4">Order ID</TableHead>
+              <TableHead className="font-bold uppercase tracking-widest text-[10px] py-4">Customer</TableHead>
+              <TableHead className="font-bold uppercase tracking-widest text-[10px] py-4">Payment</TableHead>
+              <TableHead className="font-bold uppercase tracking-widest text-[10px] py-4">Status</TableHead>
+              <TableHead className="font-bold uppercase tracking-widest text-[10px] py-4 text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {orders.map((order) => (
+              <TableRow key={order.id} className="border-b border-border/50 transition-colors hover:bg-secondary/10">
+                <TableCell className="font-mono text-[10px] text-muted-foreground py-4 px-4">
+                  #{order.id.slice(-8).toUpperCase()}
+                </TableCell>
+                <TableCell className="py-4">
+                   <div className="flex flex-col">
+                      <span className="font-bold">{order.user.firstName} {order.user.lastName}</span>
+                      <span className="text-xs text-muted-foreground">{order.orderItems[0].product.name}</span>
+                   </div>
+                </TableCell>
+                <TableCell className="py-4">
+                   <div className="flex flex-col gap-1">
+                      <span className="text-xs font-bold uppercase tracking-tighter">{order.paymentMethod}</span>
+                      <Badge
+                        className={`w-fit rounded-full px-2 py-0 text-[9px] font-bold border-none ${getStatusColor(order.paymentStatus)}`}
+                      >
+                        {order.paymentStatus}
+                      </Badge>
+                   </div>
+                </TableCell>
+                <TableCell className="py-4">
+                  <Badge
+                    className={`rounded-full px-3 py-1 text-[10px] font-bold border-none ${getStatusColor(order.status)}`}
+                  >
+                    {order.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="py-4 text-right px-4">
+                  <div className="flex items-center justify-end gap-2">
+                    <Select
+                      onValueChange={(value: OrderStatus) =>
+                        handleStatusUpdate(order.id, value, "order")
+                      }
+                      defaultValue={order.status}
+                    >
+                      <SelectTrigger className="h-9 w-[120px] rounded-full text-[10px] font-bold">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(OrderStatus).map((status) => (
+                          <SelectItem key={status} value={status} className="text-xs">
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full hover:bg-blue-500/10 hover:text-blue-600"
+                      onClick={() => handleViewDetails(order)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
