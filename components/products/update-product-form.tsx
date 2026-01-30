@@ -17,14 +17,6 @@ import { NameField } from "./product-creation/name-field";
 import { PriceField } from "./product-creation/price-field";
 import { ProductFormData, productSchema } from "./product-creation/schema";
 import { StockField } from "./product-creation/stock-field";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../ui/alert-dialog";
 import Image from "next/image";
 
 interface SubmitButtonProps {
@@ -61,7 +53,6 @@ function SubmitButton({ text, isLoading }: SubmitButtonProps) {
 
 export default function UpdateProductForm({ product }: UpdateProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [openAlertIndex, setOpenAlertIndex] = useState<number | null>(null);
   const { toast } = useToast();
   const [productPictures, setProductPictures] = useState<string[]>(
     product.images || []

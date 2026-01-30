@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +37,6 @@ const ForgotPassword = () => {
 
   const [successfulCreation, setSuccessfulCreation] = React.useState(false);
   const [resetSuccess, setResetSuccess] = React.useState(false);
-  const [secondFactor, setSecondFactor] = React.useState(false);
   const [error, setError] = React.useState<ErrorState | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -112,7 +110,7 @@ const ForgotPassword = () => {
       });
 
       if (result.status === "needs_second_factor") {
-        setSecondFactor(true);
+        setError({ message: "2FA is required, but not supported in this UI." });
       } else if (result.status === "complete") {
         setResetSuccess(true);
         // Don't immediately set active session - let user sign in again
