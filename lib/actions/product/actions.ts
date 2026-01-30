@@ -62,7 +62,7 @@ export type SingleProductResponse = {
  * @returns Promise resolving to ProductResponse
  */
 export async function addProduct(
-  input: ProductInput
+  input: ProductInput,
 ): Promise<ProductResponse> {
   try {
     // Validate input
@@ -121,7 +121,7 @@ type UpdateProductInput = z.infer<typeof updateProductSchema>;
  * @returns Promise resolving to ProductResponse
  */
 export async function updateProduct(
-  input: UpdateProductInput
+  input: UpdateProductInput,
 ): Promise<ProductResponse> {
   try {
     // Validate input
@@ -176,7 +176,7 @@ export async function updateProduct(
  * @returns Promise resolving to ProductResponse
  */
 export async function getProduct(
-  productId: string
+  productId: string,
 ): Promise<SingleProductResponse> {
   try {
     // Fetch the product by ID
@@ -280,7 +280,7 @@ export async function getProduct(
  * @returns Promise resolving to success/error response
  */
 export async function deleteProduct(
-  productId: string
+  productId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Check if the product exists
@@ -320,7 +320,7 @@ export async function deleteProduct(
   }
 }
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/prisma/generated/client";
 import { Product } from "@/components/products/product-details";
 
 /**
@@ -465,7 +465,7 @@ export async function getNewProducts(): Promise<{
               };
             }
             throw new Error(
-              `Invalid attribute format for product ID ${product.id}`
+              `Invalid attribute format for product ID ${product.id}`,
             );
           })
         : [];
@@ -555,7 +555,7 @@ export interface PaginatedResponse {
 }
 
 export async function getAllProducts(
-  params: PaginationParams
+  params: PaginationParams,
 ): Promise<PaginatedResponse> {
   try {
     const {
@@ -641,13 +641,13 @@ export async function getAllProducts(
           (attribute): ProductAttribute => ({
             key: String(attribute.key),
             value: String(attribute.value),
-          })
+          }),
         );
 
         const discountedPrice =
           discountPercentage > 0 && discountPercentage <= 100
             ? parseFloat(
-                (product.price * (1 - discountPercentage / 100)).toFixed(2)
+                (product.price * (1 - discountPercentage / 100)).toFixed(2),
               )
             : undefined;
 
@@ -656,7 +656,7 @@ export async function getAllProducts(
           attributes,
           discountedPrice,
         };
-      }
+      },
     );
 
     const totalPages = Math.ceil(totalCount / validPageSize);
