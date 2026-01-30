@@ -104,80 +104,103 @@ export default function CartSidebar() {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative hover:bg-secondary/50 rounded-full h-10 w-10">
           <ShoppingCart className="h-5 w-5" />
-          <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
-            {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-          </span>
+          {cartItems.length > 0 && (
+            <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-blue-600 text-[10px] font-bold text-white flex items-center justify-center">
+              {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+            </span>
+          )}
         </Button>
       </SheetTrigger>
-      <ScrollArea className="flex-grow max-h-[400px]">
-        <SheetContent className="w-full sm:max-w-lg flex flex-col">
-          <SheetHeader>
-            <SheetTitle>
-              {showCheckoutForm ? "Checkout" : "Your Cart"}
+      <SheetContent className="w-full sm:max-w-md flex flex-col p-0 bg-background/95 backdrop-blur-xl border-l border-border/50">
+          <SheetHeader className="p-8 border-b border-border/50">
+            <SheetTitle className="text-2xl font-bold tracking-tight">
+              {showCheckoutForm ? "Checkout" : "Bag"}
             </SheetTitle>
           </SheetHeader>
-          {showCheckoutForm ? (
-            <CheckoutForm onClose={handleCloseCheckout} />
-          ) : (
-            <>
-              {/* Wrapping the cart items in ScrollArea */}
-              {isLoading ? (
-                <CartItemFallback />
-              ) : cartItems.length === 0 ? (
-                <div className="flex justify-center items-center h-40 text-muted-foreground">
-                  Your cart is empty
-                </div>
-              ) : (
-                cartItems.map((item) => (
-                  <CartItem
-                    key={item.id}
-                    item={{
-                      id: item.id,
-                      name: item.product.name,
-                      price: item.product.price,
-                      quantity: item.quantity,
-                      image: item.product.images[0],
-                    }}
-                    updateQuantity={updateQuantity}
-                    removeItem={removeItem}
-                  />
-                ))
-              )}
-              {/* Total and Checkout Button */}
-              <div className="border-t pt-4 mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-lg font-semibold">Total:</span>
-                  <span className="text-lg font-semibold">
-                    ${totalPrice.toFixed(2)}
-                  </span>
-                </div>
-                {discountedPercentage ? (
-                  <div className="flex justify-between items-center mb-4 text-green-600">
-                    <span className="text-sm font-medium">
-                      Discounted Total:
-                    </span>
-                    <span className="text-lg font-semibold">
-                      ${discountedPrice.toFixed(2)}
-                    </span>
+
+          <div className="flex-grow overflow-hidden flex flex-col">
+            {showCheckoutForm ? (
+              <ScrollArea className="flex-grow p-8">
+                <CheckoutForm onClose={handleCloseCheckout} />
+              </ScrollArea>
+            ) : (
+              <>
+                <ScrollArea className="flex-grow px-8 py-4">
+                  {isLoading ? (
+                    <CartItemFallback />
+                  ) : cartItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
+                       <div className="bg-secondary/50 p-6 rounded-full">
+                          <ShoppingCart className="h-10 w-10 text-muted-foreground" />
+                       </div>
+                       <div className="space-y-1">
+                          <p className="text-lg font-bold">Your bag is empty</p>
+                          <p className="text-sm text-muted-foreground">Ready to start shopping?</p>
+                       </div>
+                       <Button variant="link" onClick={() => setIsOpen(false)} className="text-blue-600 font-bold">
+                          Browse products →
+                       </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-8 py-4">
+                      {cartItems.map((item) => (
+                        <CartItem
+                          key={item.id}
+                          item={{
+                            id: item.id,
+                            name: item.product.name,
+                            price: item.product.price,
+                            quantity: item.quantity,
+                            image: item.product.images[0],
+                          }}
+                          updateQuantity={updateQuantity}
+                          removeItem={removeItem}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+
+                {cartItems.length > 0 && (
+                  <div className="p-8 bg-secondary/10 border-t border-border/50 space-y-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                      </div>
+                      {discountedPercentage ? (
+                        <div className="flex justify-between items-center text-blue-600 font-bold">
+                          <span>Special Offer ({discountedPercentage}%)</span>
+                          <span>-${(totalPrice - discountedPrice).toFixed(2)}</span>
+                        </div>
+                      ) : null}
+                      <div className="flex justify-between items-center pt-2 border-t border-border/50">
+                        <span className="text-xl font-bold">Total</span>
+                        <span className="text-xl font-bold">
+                          ${discountedPrice.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-lg font-bold shadow-lg shadow-blue-600/20"
+                      type="button"
+                      disabled={isLoading || cartItems.length === 0 || isCheckingOut}
+                      onClick={handleCheckout}
+                    >
+                      Check Out
+                    </Button>
+                    <p className="text-[10px] text-center text-muted-foreground uppercase tracking-widest font-bold">
+                       Secure Checkout Powered by Stripe
+                    </p>
                   </div>
-                ) : null}
-                <Button
-                  className="w-full"
-                  type="button"
-                  disabled={
-                    isLoading || cartItems.length === 0 || isCheckingOut
-                  }
-                  onClick={handleCheckout}
-                >
-                  Proceed to Checkout
-                </Button>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </ScrollArea>
+                )}
+              </>
+            )}
+          </div>
+      </SheetContent>
     </Sheet>
   );
 }

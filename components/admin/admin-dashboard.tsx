@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
 import { UsersList } from "./user-list";
 import { Order, OrdersList } from "./order-list";
 import { DiscountsManager } from "./discount-manager";
@@ -32,31 +33,48 @@ export async function AdminDashboard({
   });
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="discounts">Discounts</TabsTrigger>
+    <div className="container mx-auto py-12 px-4 space-y-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight">Management</h1>
+          <p className="text-xl text-muted-foreground">Oversee your store operations and customers.</p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="users" className="space-y-8">
+        <TabsList className="bg-secondary/50 p-1 rounded-full h-12 inline-flex">
+          <TabsTrigger value="users" className="rounded-full px-8 h-10 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Users</TabsTrigger>
+          <TabsTrigger value="products" className="rounded-full px-8 h-10 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Products</TabsTrigger>
+          <TabsTrigger value="orders" className="rounded-full px-8 h-10 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Orders</TabsTrigger>
+          <TabsTrigger value="discounts" className="rounded-full px-8 h-10 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Discounts</TabsTrigger>
         </TabsList>
-        <TabsContent value="users">
-          <UsersList users={users} />
+
+        <TabsContent value="users" className="mt-0">
+          <Card className="rounded-[2.5rem] border-none shadow-none bg-secondary/20 p-8">
+            <UsersList users={users} />
+          </Card>
         </TabsContent>
-        <TabsContent value="products">
-          {/* You need to check if products.data is not undefined and if its length is greater than 0. */}
-          <ProductsList
-            allProducts={products}
-            pageSize={pageSize}
-            page={page}
-          />
+
+        <TabsContent value="products" className="mt-0">
+           <Card className="rounded-[2.5rem] border-none shadow-none bg-secondary/20 p-8">
+            <ProductsList
+              allProducts={products}
+              pageSize={pageSize}
+              page={page}
+            />
+          </Card>
         </TabsContent>
-        <TabsContent value="orders">
-          <OrdersList ordersData={orders} />
+
+        <TabsContent value="orders" className="mt-0">
+           <Card className="rounded-[2.5rem] border-none shadow-none bg-secondary/20 p-8">
+            <OrdersList ordersData={orders} />
+          </Card>
         </TabsContent>
-        <TabsContent value="discounts">
-          <DiscountsManager />
+
+        <TabsContent value="discounts" className="mt-0">
+           <Card className="rounded-[2.5rem] border-none shadow-none bg-secondary/20 p-8">
+            <DiscountsManager />
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

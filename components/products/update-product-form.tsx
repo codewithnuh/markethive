@@ -141,148 +141,120 @@ export default function UpdateProductForm({ product }: UpdateProductFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      <Card>
-        <CardContent className="grid gap-6 pt-6">
-          <NameField
-            register={register}
-            errors={errors}
-            setValue={setValue}
-            watch={watch}
-          />
-          <DescriptionField
-            register={register}
-            errors={errors}
-            setValue={setValue}
-            watch={watch}
-          />
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+         <div className="md:col-span-1 space-y-4">
+            <h2 className="text-2xl font-bold">General Information</h2>
+            <p className="text-muted-foreground text-sm">Update the core details of your product.</p>
+         </div>
+         <div className="md:col-span-2">
+            <Card className="rounded-[2rem] border-none shadow-none bg-secondary/20 p-8">
+              <CardContent className="p-0 grid gap-8">
+                <NameField
+                  register={register}
+                  errors={errors}
+                  setValue={setValue}
+                  watch={watch}
+                />
+                <DescriptionField
+                  register={register}
+                  errors={errors}
+                  setValue={setValue}
+                  watch={watch}
+                />
+                <CategoryField control={control} errors={errors} />
+              </CardContent>
+            </Card>
+         </div>
+      </div>
 
-          {/* Uploaded images section */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Uploaded Images</h3>
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              {productPictures.map((url, index) => (
-                <div key={index} className="relative group aspect-square">
-                  <Image
-                    fill
-                    src={url || "/placeholder.svg"}
-                    alt={`Product ${index + 1}`}
-                    className="rounded-lg border border-border w-full h-full object-cover transition-all duration-300 group-hover:opacity-75 dark:border-gray-700"
-                  />
-                  <AlertDialog
-                    open={openAlertIndex === index}
-                    onOpenChange={(isOpen) =>
-                      setOpenAlertIndex(isOpen ? index : null)
-                    }
-                  >
-                    <AlertDialogTitle className="sr-only">
-                      Update Product Images
-                    </AlertDialogTitle>
-                    <AlertDialogTrigger asChild>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-t pt-12">
+         <div className="md:col-span-1 space-y-4">
+            <h2 className="text-2xl font-bold">Media</h2>
+            <p className="text-muted-foreground text-sm">Manage product images. At least 3 required.</p>
+         </div>
+         <div className="md:col-span-2">
+            <Card className="rounded-[2rem] border-none shadow-none bg-secondary/20 p-8">
+              <CardContent className="p-0 space-y-8">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {productPictures.map((url, index) => (
+                    <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden bg-background">
+                      <Image
+                        fill
+                        src={url || "/placeholder.svg"}
+                        alt={`Product ${index + 1}`}
+                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      />
                       <button
                         type="button"
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        aria-label={`Delete image ${index + 1}`}
+                        onClick={() => {
+                           setProductPictures((prev) => prev.filter((_, i) => i !== index));
+                           toast({ title: "Image removed" });
+                        }}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                       </button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="bg-background border border-border">
-                      <AlertDialogHeader>
-                        <h3 className="text-lg font-semibold">Delete Image</h3>
-                        <p className="text-muted-foreground">
-                          Are you sure you want to delete this image? This
-                          action cannot be undone.
-                        </p>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <Button
-                          variant="destructive"
-                          onClick={() => {
-                            setProductPictures((prev) =>
-                              prev.filter((_, i) => i !== index)
-                            );
-                            setOpenAlertIndex(null);
-                            toast({
-                              variant: "default",
-                              title: "Image Removed",
-                              description: `Image ${
-                                index + 1
-                              } has been removed.`,
-                            });
-                          }}
-                        >
-                          Delete
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setOpenAlertIndex(null)}
-                        >
-                          Cancel
-                        </Button>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+                <UploadButton
+                  className="ut-button:bg-blue-600 ut-button:rounded-full ut-button:h-12 ut-button:w-full"
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(files) => {
+                    if (files.length > 0) {
+                      const uploadedUrls = files.map((file) => file.url);
+                      setProductPictures((prev) => [...prev, ...uploadedUrls]);
+                      toast({ title: "Images Uploaded" });
+                    }
+                  }}
+                  onUploadError={(err) => setFileError(err.message)}
+                />
+                {fileError && <p className="text-sm text-red-500 font-medium">{fileError}</p>}
+              </CardContent>
+            </Card>
+         </div>
+      </div>
 
-          {/* Upload new images */}
-          <UploadButton
-            className="ut-button:bg-secondary ut-button:w-full"
-            endpoint="imageUploader"
-            onClientUploadComplete={(files) => {
-              if (files.length > 0) {
-                const uploadedUrls = files.map((file) => file.url);
-                setProductPictures((prev) => [...prev, ...uploadedUrls]);
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-t pt-12">
+         <div className="md:col-span-1 space-y-4">
+            <h2 className="text-2xl font-bold">Pricing & Inventory</h2>
+            <p className="text-muted-foreground text-sm">Adjust pricing and stock availability.</p>
+         </div>
+         <div className="md:col-span-2">
+            <Card className="rounded-[2rem] border-none shadow-none bg-secondary/20 p-8">
+              <CardContent className="p-0 grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <PriceField register={register} errors={errors} />
+                <StockField register={register} errors={errors} />
+              </CardContent>
+            </Card>
+         </div>
+      </div>
 
-                toast({
-                  variant: "default",
-                  title: "Images Uploaded",
-                  description:
-                    "Your new images have been uploaded successfully.",
-                });
-              }
-            }}
-            onUploadError={(err) => {
-              setFileError(err.message);
-              toast({
-                variant: "destructive",
-                title: "Upload Error",
-                description: `Error: ${err.message}`,
-              });
-            }}
-          />
-          {fileError && (
-            <p className="text-sm text-red-500 mt-1">{fileError}</p>
-          )}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-t pt-12">
+         <div className="md:col-span-1 space-y-4">
+            <h2 className="text-2xl font-bold">Specifications</h2>
+            <p className="text-muted-foreground text-sm">Update technical attributes.</p>
+         </div>
+         <div className="md:col-span-2">
+            <Card className="rounded-[2rem] border-none shadow-none bg-secondary/20 p-8">
+              <CardContent className="p-0">
+                <AttributesField
+                  attributes={attributes}
+                  setAttributes={setAttributes}
+                  setValue={setValue}
+                  errors={errors}
+                />
+              </CardContent>
+            </Card>
+         </div>
+      </div>
 
-          <CategoryField control={control} errors={errors} />
-          <StockField register={register} errors={errors} />
-          <PriceField register={register} errors={errors} />
-          <AttributesField
-            attributes={attributes}
-            setAttributes={setAttributes}
-            setValue={setValue}
-            errors={errors}
-          />
-        </CardContent>
-      </Card>
-
-      <SubmitButton text="Update Product" isLoading={isLoading} />
+      <div className="pt-12 flex justify-end border-t">
+        <div className="w-full md:w-1/3">
+           <SubmitButton text="Update Product" isLoading={isLoading} />
+        </div>
+      </div>
     </form>
   );
 }

@@ -12,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getAllSingleUserOrders } from "@/lib/actions/product/orders/actions";
 import { useAuth } from "@clerk/nextjs";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -110,60 +112,68 @@ export function OrdersList() {
   }
 
   return (
-    <div className="space-y-4 p-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Orders List</h2>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="px-4 py-1">
-            Customer View
-          </Badge>
-        </div>
+    <div className="space-y-12 py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+      <div className="space-y-2">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Your Orders</h1>
+        <p className="text-xl text-muted-foreground">Track and manage your recent purchases.</p>
       </div>
 
       {orders.length === 0 ? (
-        <Alert>
-          <AlertTitle>No Orders Found</AlertTitle>
-          <AlertDescription>
-            You haven&apos;t placed any orders yet. Start shopping to see your
-            orders here!
-          </AlertDescription>
-        </Alert>
+        <div className="bg-secondary/30 rounded-[2rem] p-12 text-center space-y-4 border-2 border-dashed">
+          <h2 className="text-2xl font-bold">No orders found</h2>
+          <p className="text-muted-foreground max-w-xs mx-auto">
+            It looks like you haven&apos;t placed any orders yet. Start exploring our latest products!
+          </p>
+          <Button asChild className="rounded-full px-8 bg-blue-600 hover:bg-blue-700">
+            <Link href="/products">Start Shopping</Link>
+          </Button>
+        </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>User Name</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-medium">#{order.id}</TableCell>
-                <TableCell>{order.orderItems[0].product.name}</TableCell>
-                <TableCell>
-                  {order.user.firstName + " " + order.user.lastName}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="secondary"
-                    className={getStatusColor(
-                      order.status === "PROCESSING"
-                        ? OrderStatus.Processing
-                        : order.status === OrderStatus.Shipping
-                        ? OrderStatus.Shipping
-                        : OrderStatus.Shipped
-                    )}
-                  >
-                    {order.status}
-                  </Badge>
-                </TableCell>
+        <div className="bg-white dark:bg-secondary/20 rounded-[2rem] overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-none hover:bg-transparent bg-secondary/50">
+                <TableHead className="py-6 px-8 font-bold uppercase tracking-widest text-[10px]">Order ID</TableHead>
+                <TableHead className="py-6 px-8 font-bold uppercase tracking-widest text-[10px]">Product</TableHead>
+                <TableHead className="py-6 px-8 font-bold uppercase tracking-widest text-[10px]">Total Price</TableHead>
+                <TableHead className="py-6 px-8 font-bold uppercase tracking-widest text-[10px] text-right">Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {orders.map((order) => (
+                <TableRow key={order.id} className="border-b border-border/50 hover:bg-secondary/10 transition-colors">
+                  <TableCell className="py-6 px-8 font-mono text-xs text-muted-foreground">
+                    #{order.id.slice(-8).toUpperCase()}
+                  </TableCell>
+                  <TableCell className="py-6 px-8">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-lg">{order.orderItems[0].product.name}</span>
+                      {order.orderItems.length > 1 && (
+                        <span className="text-xs text-muted-foreground">+{order.orderItems.length - 1} more items</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-6 px-8 font-bold">
+                    ${order.totalPrice.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="py-6 px-8 text-right">
+                    <Badge
+                      className={`rounded-full px-4 py-1 text-[10px] font-bold border-none ${getStatusColor(
+                        order.status === "PROCESSING"
+                          ? OrderStatus.Processing
+                          : order.status === OrderStatus.Shipping
+                          ? OrderStatus.Shipping
+                          : OrderStatus.Shipped
+                      )}`}
+                    >
+                      {order.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

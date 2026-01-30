@@ -4,8 +4,6 @@ import { ProductFilters } from "@/components/products/product-filter";
 import { getAllProducts } from "@/lib/actions/product/actions";
 import { ProductCardSkeleton } from "@/components/products/new-products";
 import { connection } from "next/server";
-export const experimental_ppr = true;
-
 // Update the type to reflect the async nature of searchParams
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -48,9 +46,14 @@ export default async function ProductsPage(props: {
     maxPrice,
   });
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">Our Products</h1>
-      <div className="flex flex-col md:flex-row gap-6">
+    <div className="container mx-auto px-4 py-16">
+      <div className="space-y-4 mb-12">
+        <h1 className="text-4xl md:text-6xl font-bold tracking-tight">Explore the line-up.</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl">
+          Designed with cutting-edge technology to help you do more.
+        </p>
+      </div>
+      <div className="flex flex-col lg:flex-row gap-12">
         <div className="w-full md:w-1/4">
           <ProductFilters />
         </div>
